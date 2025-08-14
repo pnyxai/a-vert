@@ -3,8 +3,8 @@ from copy import deepcopy
 from scipy import spatial
 
 
-from src import embedding_tools as emb
-from src import prompts_general as prompts
+from a_vert import embedding_tools as emb
+from a_vert import prompts_general as prompts
 
 
 def get_candidate_groups_embedings_ranking(model_response,

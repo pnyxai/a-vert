@@ -6,7 +6,7 @@ from testing import babi
 from testing import mmlu
 from testing import babisteps
 
-from src import processing as a_vert
+from a_vert import processing as a_vert
 
 
 

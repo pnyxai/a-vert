@@ -7,8 +7,8 @@ from scipy import spatial
 
 # TODO: Replace with package!
 import sys
-sys.path.append('/tasks/')
-from src import processing as a_vert
+sys.path.append('/')
+from a_vert import processing as a_vert
 
 # This environment variable should contain an endpoint of https://github.com/huggingface/text-embeddings-inference
 # (or compatible one) loaded with the desired embedding model.
@@ -68,13 +68,14 @@ def doc_eval(pred, refs):
     # Get other elements from the bAbI world
     wrong_group_text = get_babi_options(refs)
     # Construct the wrong candidates group
-    group_texts_dict = a_vert.construct_candidate_groups([pred], 
+    group_texts_dict = a_vert.construct_candidate_groups([refs], 
                                wrong_group_text, 
                                ["correct", "wrong"], 
                                enhance=True,
                                )
+
     # Process all candidate groups
-    response_group_distribution, _ = a_vert.get_candidate_groups_embedings_ranking([pred],
+    response_group_distribution, asd = a_vert.get_candidate_groups_embedings_ranking([pred],
                                            group_texts_dict,
                                            TEI_ENDPOINT,
                                            instruction=INSTRUCTION,
@@ -82,6 +83,7 @@ def doc_eval(pred, refs):
                                            grouping_method=GROUPING, 
                                            verbose=False
                                            )
+
     # Check if this is a match
     a_vert_match = True
     if response_group_distribution["correct"] < response_group_distribution["wrong"]:
@@ -122,14 +124,20 @@ def process_results(doc, results):
 
 def get_babi_options(question_target):
     # Look for options to the answer in the stuff...
-    options_text = []
+    world_text = []
     for this_stuff in all_the_stuff_in_the_world:
         if question_target in this_stuff:
-            options_text = deepcopy(this_stuff)
+            world_text = deepcopy(this_stuff)
             break
-    if len(options_text) == 0:
+    if len(world_text) == 0:
         err_str = f"Cannot find stuff to make the options for target: {question_target}"
         raise ValueError(err_str)
+    
+    # Remove correct answer from list
+    options_text = list()
+    for text in world_text:
+        if text != question_target:
+            options_text.append(text)
     
     # Add unknowns
     options_text += ["unknown", 
@@ -138,6 +146,8 @@ def get_babi_options(question_target):
                      "not enough information", 
                      "it's impossible to know", 
                      "don't know"]
+    
+    
     return options_text
 
 # --------------------- bAbI world actors and places ---------------------------
