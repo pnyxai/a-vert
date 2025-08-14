@@ -1,0 +1,6 @@
+"dataset_name": "task_1-single_supporting_fact"
+# "description": "The following are basic taks on the subject of : single supporting fact.\n\n"
+"tag": "babi-all"
+"include": "_default_template_yaml"
+"task": "babi-task_01-single_supporting_fact"
+"task_alias": "babi task 01 - single supporting fact"

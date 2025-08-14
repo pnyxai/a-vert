@@ -8,10 +8,7 @@ from src import prompts_general as prompts
 
 
 def get_candidate_groups_embedings_ranking(model_response,
-                                           correct_group_text, 
-                                           wrong_group_text, 
-                                           refusal_group_text, 
-                                           formulation_mistake_group_text,
+                                           candidate_groups_dict,
                                            tei_endpoint,
                                            instruction=None,
                                            distance_fn = spatial.distance.cosine, 
@@ -19,15 +16,8 @@ def get_candidate_groups_embedings_ranking(model_response,
                                            batch_size=32,
                                            verbose=False,
                                            ):
-    """This function takes a four lists:
-    - `correct_group_text` : The list of candidates that represent a correct
-                             answer.
-    - `wrong_group_text` : The list of candidates that represent a wrong answer.
-    - `refusal_group_text` : The list of candidates that represent a refusal
-                             to answer from the language model.
-    - `formulation_mistake_group_text` : The list of candidates that represent a
-                             critique to the question by the language model and
-                             states that the question cannot be answered.
+    """This function takes a dictionary of candidate groups. Each element of the
+    dictionary is list of text entries to be evaluated.
     Then takes the language model response (`model_response`) and compares the 
     embedding of this response to each candidate group and produces a 
     classification of the model response into one of these four candidate groups
@@ -41,71 +31,64 @@ def get_candidate_groups_embedings_ranking(model_response,
 
     # Create batch for the embedding endpoint
     batch = list()
-    # Correct
-    batch += correct_group_text
-    idxs_correct = [0, len(correct_group_text)]
-    # Wrong
-    batch += wrong_group_text
-    idxs_wrong = [idxs_correct[1], idxs_correct[1]+len(wrong_group_text)]
-    # Refusal group
-    batch += refusal_group_text
-    idxs_refusal = [idxs_wrong[1], idxs_wrong[1]+len(refusal_group_text)]
-    # Formulation Mistake
-    batch += formulation_mistake_group_text
-    idxs_formulation_mistake = [idxs_refusal[1], idxs_refusal[1]+len(formulation_mistake_group_text)]        
+    indexes_dict = dict()
+    last_group = None
+    for group_name in candidate_groups_dict.keys():
+        these_texts = candidate_groups_dict[group_name]
+        batch += these_texts
+        if last_group is None:
+            indexes_dict[group_name] = [0, len(these_texts)]
+        else:
+            indexes_dict[group_name] = [indexes_dict[last_group][1], indexes_dict[last_group][1]+len(these_texts)]
+        last_group = group_name
     
 
     # Calculate targets embeddings
     targets_embeddings = emb.get_embedding(batch, tei_endpoint, max_batch_size=batch_size)
     # Get model response embedding
     if instruction is not None:
-        model_response_to_embedding = f'Instruct: {instruction}\nQuery:{model_response}'
+        if "{query}" not in instruction:
+            raise ValueError("Instruction must contain a {query} placeholder")
+        model_response_to_embedding = instruction.format(query=model_response)
     else:
         model_response_to_embedding = model_response
-    model_response_embedding = np.squeeze(emb.get_embedding(model_response, tei_endpoint, max_batch_size=batch_size))
+    model_response_embedding = np.squeeze(emb.get_embedding(model_response_to_embedding, tei_endpoint, max_batch_size=batch_size))
 
     # Calculate the distances
     all_distances = [1 - distance_fn(model_response_embedding, this_emb) for this_emb in targets_embeddings]
 
-    # Split the distances into the corresponding groups
-    correct_group_distances = all_distances[idxs_correct[0]:idxs_correct[1]]
-    refusal_group_distances = all_distances[idxs_refusal[0]:idxs_refusal[1]]
-    formulation_mistake_distances = all_distances[idxs_formulation_mistake[0]:idxs_formulation_mistake[1]]
-    wrong_group_distances = all_distances[idxs_wrong[0]:idxs_wrong[1]]
 
-    # Get per-group scores
+    # Select grouping method
     if grouping_method == "max":
         grouping_method_fn = np.max
     elif grouping_method == "mean":
         grouping_method_fn = np.mean
+    elif "mean_top_k_" in grouping_method:
+        top_k = int(grouping_method.split("mean_top_k_")[-1])
+        grouping_method_fn = lambda x : np.mean(x[:top_k])
     else:
         raise ValueError("Grouping method not supported")
-    
-    refusal_score = grouping_method_fn(refusal_group_distances)
-    formulation_mistake_score = grouping_method_fn(formulation_mistake_distances)
-    correct_score = grouping_method_fn(correct_group_distances)
-    wrong_score = grouping_method_fn(wrong_group_distances)
+
+    # Split the distances into the corresponding groups
+    group_distances_dict = dict()
+    norm_sum = 0
+    for group_name in candidate_groups_dict.keys():
+        this_group_distances = all_distances[indexes_dict[group_name][0]:indexes_dict[group_name][1]]
+        group_distances_dict[group_name] = grouping_method_fn(this_group_distances)
+        # Track total score for normalization
+        norm_sum+=group_distances_dict[group_name]
+
+        if verbose:
+            print(f"Group: {group_name}")
+            for idx in np.argsort(this_group_distances)[::-1]:
+                print(f"{this_group_distances[idx]}\t{candidate_groups_dict[group_name][idx]}")
 
     # Normalize scores
-    scores_all = [correct_score, wrong_score, refusal_score, formulation_mistake_score]
-    response_group_distribution = scores_all/np.sum(scores_all)
-
-    if verbose:
-        print("Correct")
-        for idx in np.argsort(correct_group_distances)[::-1]:
-            print(f"{correct_group_distances[idx]}\t{correct_group_text[idx]}")
-        print("Wrong")
-        for idx in np.argsort(wrong_group_distances)[::-1]:
-            print(f"{wrong_group_distances[idx]}\t{wrong_group_text[idx]}")
-        print("Refusal")
-        for idx in np.argsort(refusal_group_distances)[::-1]:
-            print(f"{refusal_group_distances[idx]}\t{refusal_group_text[idx]}")
-        print("Formulation Mistake")
-        for idx in np.argsort(formulation_mistake_distances)[::-1]:
-            print(f"{formulation_mistake_distances[idx]}\t{formulation_mistake_group_text[idx]}")
+    for group_name in candidate_groups_dict.keys():
+        group_distances_dict[group_name] /= norm_sum
 
 
-    return response_group_distribution, all_distances
+    return group_distances_dict, all_distances
 
 
 
@@ -308,6 +291,101 @@ def question_mistake_candidate_group_construction(with_options, return_reference
     
 
 
+def construct_candidate_groups(correct_group_text, 
+                               wrong_group_text, 
+                               target_group_names_list, 
+                               enhance=True,
+                               with_options=False,
+                               option_symbol=None,
+                               correct_group_idxs=None, 
+                               wrong_group_idxs=None, 
+                               return_references=False):
 
+    assert len(target_group_names_list) == len(np.unique(target_group_names_list)), "Group names contain duplicated elements."
+    
+    # Complete data, for compatibility with functions
+    if not with_options and (correct_group_idxs is None or wrong_group_idxs is None):
+        correct_group_idxs = [i for i in range(len(correct_group_text))]
+        wrong_group_idxs = [i for i in range(len(wrong_group_text))]
+    if  with_options and (correct_group_idxs is None or wrong_group_idxs is None):
+        raise ValueError("If the target is with options enhancements, the targets indexes must be provided.")
+
+
+    # Construct the candidates for each group: Correct, Wrong, Refusal and Formulation mistake
+    track_labels = list()
+    track_groups = list()
+    original_correct_group_text = deepcopy(correct_group_text)
+    # original_wrong_group_text = deepcopy(wrong_group_text)
+    output_dict = dict()
+    for group_name in target_group_names_list:
+
+        #--------------------- CORRECT GROUP ---------------------------------------
+        if group_name == "correct":
+            
+            correct_candidates = correct_candidate_group_construction(correct_group_text, 
+                                                correct_group_idxs, 
+                                                wrong_group_text, 
+                                                wrong_group_idxs, 
+                                                enhance, 
+                                                with_options=with_options, 
+                                                option_symbol=option_symbol,
+                                                return_references=return_references)
+            if return_references :
+                correct_group_text, track_labels_aux, track_groups_aux = correct_candidates
+                track_labels += track_labels_aux
+                track_groups += track_groups_aux
+            else:
+                correct_group_text = correct_candidates
+
+            output_dict[group_name] = correct_group_text
+        #--------------------- WRONG GROUP -----------------------------------------
+        elif group_name == "wrong":
+            wrong_candidates = wrong_candidate_group_construction(original_correct_group_text, 
+                                                correct_group_idxs, 
+                                                wrong_group_text, 
+                                                wrong_group_idxs, 
+                                                enhance, 
+                                                with_options=with_options, 
+                                                option_symbol=option_symbol,
+                                                return_references=return_references)
+            if return_references :
+                wrong_group_text, track_labels_aux, track_groups_aux = wrong_candidates
+                track_labels += track_labels_aux
+                track_groups += track_groups_aux
+            else:
+                wrong_group_text = wrong_candidates
+
+            output_dict[group_name] = wrong_group_text
+        #--------------------- REFUSAL GROUP ---------------------------------------
+        elif group_name == "refusal":
+
+            refusal_candidates = refusal_candidate_group_construction(return_references=return_references)
+            if return_references :
+                refusal_group_text, track_labels_aux, track_groups_aux = refusal_candidates
+                track_labels += track_labels_aux
+                track_groups += track_groups_aux
+            else:
+                refusal_group_text = refusal_candidates
+
+            output_dict[group_name] = refusal_group_text
+        #--------------------- FORMULATION MISTAKE GROUP ---------------------------
+        elif group_name == "formulation_mistake":
+
+            question_mistake_candidates = question_mistake_candidate_group_construction(with_options, return_references=return_references)
+            if return_references :
+                formulation_mistake_group_text, track_labels_aux, track_groups_aux = question_mistake_candidates
+                track_labels += track_labels_aux
+                track_groups += track_groups_aux
+            else:
+                formulation_mistake_group_text = question_mistake_candidates
+
+            output_dict[group_name] = formulation_mistake_group_text
+        else:
+            raise ValueError(f"Group name \"{group_name}\" is not defined.")
+
+    if return_references :
+        return output_dict, track_labels, track_groups
+    else:
+        return output_dict
     
     

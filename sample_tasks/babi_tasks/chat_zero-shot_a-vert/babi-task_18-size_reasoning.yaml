@@ -1,0 +1,6 @@
+"dataset_name": "task_18-size_reasoning"
+# "description": "The following are basic taks on the subject of : size reasoning.\n\n"
+"tag": "babi-all"
+"include": "_default_template_yaml"
+"task": "babi-task_18-size_reasoning"
+"task_alias": "babi task 18 - size reasoning"

@@ -1,0 +1,25 @@
+dataset_path: RawthiL/babi_tasks # based on Muennighoff/babi with per-tasks splits
+training_split: train
+validation_split: validation
+test_split: test
+output_type: generate_until
+doc_to_text: "Passage: {{passage}}Question: {{question}}"
+doc_to_target: "{{answer}}"
+process_results: !function utils.process_results
+generation_kwargs:
+  max_gen_toks: 2048
+  until:
+    - "</s>"
+filter_list:
+  - name: pass_all
+    filter:
+      - function: take_first
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+  - metric: a-vert_match
+    aggregation: mean
+    higher_is_better: true
+metadata:
+  version: 1.0

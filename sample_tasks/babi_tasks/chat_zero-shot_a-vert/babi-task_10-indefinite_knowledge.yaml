@@ -1,0 +1,6 @@
+"dataset_name": "task_10-indefinite_knowledge"
+# "description": "The following are basic taks on the subject of : indefinite knowledge.\n\n"
+"tag": "babi-all"
+"include": "_default_template_yaml"
+"task": "babi-task_10-indefinite_knowledge"
+"task_alias": "babi task 10 - indefinite knowledge"

@@ -48,74 +48,25 @@ def process_lmeh_sample_question(question_json,
     assert len(wrong_group_text)==len(wrong_group_idxs), f"{len(wrong_group_text)} -- {len(wrong_group_idxs)}"
 
     # Construct the candidates for each group: Correct, Wrong, Refusal and Formulation mistake
-    track_labels = list()
-    track_groups = list()
-    original_correct_group_text = deepcopy(correct_group_text)
-    # original_wrong_group_text = deepcopy(wrong_group_text)
-    #--------------------- CORRECT GROUP ---------------------------------------
-    correct_candidates = a_vert.correct_candidate_group_construction(correct_group_text, 
-                                         correct_group_idxs, 
-                                         wrong_group_text, 
-                                         wrong_group_idxs, 
-                                         enhance, 
-                                         with_options=with_options, 
-                                         option_symbol=option_symbol,
-                                         return_references=return_references)
+    out_aux = a_vert.construct_candidate_groups(correct_group_text, 
+                               wrong_group_text, 
+                               ["correct", "wrong", "refusal", "formulation_mistake"], 
+                               enhance=enhance,
+                               with_options=with_options,
+                               option_symbol=option_symbol,
+                               correct_group_idxs=correct_group_idxs, 
+                               wrong_group_idxs=wrong_group_idxs, 
+                               return_references=return_references)
     if return_references :
-        correct_group_text, track_labels_aux, track_groups_aux = correct_candidates
-        track_labels += track_labels_aux
-        track_groups += track_groups_aux
+        group_texts_dict = out_aux[0]
+        track_labels = out_aux[1]
+        track_groups = out_aux[2]
     else:
-        correct_group_text = correct_candidates
-
-
-    #--------------------- WRONG GROUP -----------------------------------------
-
-    wrong_candidates = a_vert.wrong_candidate_group_construction(original_correct_group_text, 
-                                         correct_group_idxs, 
-                                         wrong_group_text, 
-                                         wrong_group_idxs, 
-                                         enhance, 
-                                         with_options=with_options, 
-                                         option_symbol=option_symbol,
-                                         return_references=return_references)
-    if return_references :
-        wrong_group_text, track_labels_aux, track_groups_aux = wrong_candidates
-        track_labels += track_labels_aux
-        track_groups += track_groups_aux
-    else:
-        wrong_group_text = wrong_candidates
-
-
-    #--------------------- REFUSAL GROUP ---------------------------------------
-
-    refusal_candidates = a_vert.refusal_candidate_group_construction(return_references=return_references)
-    if return_references :
-        refusal_group_text, track_labels_aux, track_groups_aux = refusal_candidates
-        track_labels += track_labels_aux
-        track_groups += track_groups_aux
-    else:
-        refusal_group_text = refusal_candidates
-
-   
-
-    #--------------------- FORMULATION MISTAKE GROUP ---------------------------
-
-    question_mistake_candidates = a_vert.question_mistake_candidate_group_construction(with_options, return_references=return_references)
-    if return_references :
-        formulation_mistake_group_text, track_labels_aux, track_groups_aux = question_mistake_candidates
-        track_labels += track_labels_aux
-        track_groups += track_groups_aux
-    else:
-        formulation_mistake_group_text = question_mistake_candidates
-
+        group_texts_dict = out_aux
 
     # Process all candidate groups
-    response_group_distribution, all_distances = a_vert.get_candidate_groups_embedings_ranking(model_response,
-                                           correct_group_text, 
-                                           wrong_group_text, 
-                                           refusal_group_text, 
-                                           formulation_mistake_group_text,
+    group_distances_dict, all_distances = a_vert.get_candidate_groups_embedings_ranking(model_response,
+                                            group_texts_dict,
                                            tei_endpoint,
                                            instruction=instruction,
                                            distance_fn = distance_fn, 
@@ -126,13 +77,16 @@ def process_lmeh_sample_question(question_json,
 
     # Return data
     if return_references:
+        all_texts = list()
+        for key in group_texts_dict.keys():
+            all_texts += group_texts_dict[key]
         distances_data = {
-            "texts" : correct_group_text+wrong_group_text+refusal_group_text+formulation_mistake_group_text,
+            "texts" : all_texts,
             "labels" : track_labels,
             "groups" : track_groups,
             "distances" : all_distances
         }
-        return response_group_distribution, distances_data
+        return group_distances_dict, distances_data
     else:
-        return response_group_distribution
+        return group_distances_dict
 

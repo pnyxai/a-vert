@@ -136,7 +136,7 @@ def extract_data(question_json):
     model_response = question_json['resps'][0][0]
     # Get the correct answer
     correct_group_text = [question_json['doc']['answer']]
-    # Look for options to the answe in the stuff...
+    # Look for options to the answer in the stuff...
     options_text = []
     for this_stuff in all_the_stuff_in_the_world:
         if correct_group_text[0] in this_stuff:
