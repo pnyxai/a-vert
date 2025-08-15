@@ -9,8 +9,12 @@ from a_vert import prompts_general as prompts
 
 def get_candidate_groups_embedings_ranking(model_response,
                                            candidate_groups_dict,
-                                           tei_endpoint,
-                                           instruction=None,
+                                           endpoint,
+                                           endpoint_type, 
+                                           method,
+                                           model_name=None,
+                                           query_template=None,
+                                           document_template=None,
                                            distance_fn = spatial.distance.cosine, 
                                            grouping_method="max", 
                                            batch_size=32,
@@ -42,21 +46,30 @@ def get_candidate_groups_embedings_ranking(model_response,
             indexes_dict[group_name] = [indexes_dict[last_group][1], indexes_dict[last_group][1]+len(these_texts)]
         last_group = group_name
     
-
-    # Calculate targets embeddings
-    targets_embeddings = emb.get_embedding(batch, tei_endpoint, max_batch_size=batch_size)
-    # Get model response embedding
-    if instruction is not None:
-        if "{query}" not in instruction:
-            raise ValueError("Instruction must contain a {query} placeholder")
-        model_response_to_embedding = instruction.format(query=model_response)
+    # Calculate semantic distances
+    if method == "embedding":
+        all_distances = emb.calculate_embedding_distances(model_response,
+                                    batch,
+                                    endpoint,
+                                    endpoint_type, 
+                                    model_name=model_name,
+                                    query_template=query_template,
+                                    document_template=document_template,
+                                    distance_fn = distance_fn, 
+                                    batch_size=batch_size,
+                                    )
+    elif method == "rerank":
+        all_distances = emb.calculate_reranking_distances(model_response,
+                                  batch,
+                                  endpoint,
+                                  endpoint_type,
+                                  model_name=model_name,
+                                  query_template=query_template,
+                                  document_template=document_template,
+                                  )
     else:
-        model_response_to_embedding = model_response
-    model_response_embedding = np.squeeze(emb.get_embedding(model_response_to_embedding, tei_endpoint, max_batch_size=batch_size))
-
-    # Calculate the distances
-    all_distances = [1 - distance_fn(model_response_embedding, this_emb) for this_emb in targets_embeddings]
-
+        raise ValueError("Embedding distance calculation method not supported.")
+    
 
     # Select grouping method
     if grouping_method == "max":
@@ -89,6 +102,8 @@ def get_candidate_groups_embedings_ranking(model_response,
 
 
     return group_distances_dict, all_distances
+
+
 
 
 
