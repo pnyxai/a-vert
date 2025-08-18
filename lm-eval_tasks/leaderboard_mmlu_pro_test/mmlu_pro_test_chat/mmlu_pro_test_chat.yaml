@@ -1,0 +1,14 @@
+dataset_path: TIGER-Lab/MMLU-Pro # a copy of `cais/leaderboard_mmlu` with no auxiliary_train split
+task: leaderboard_mmlu_pro_test_chat
+test_split: test
+fewshot_split: validation
+output_type: generate_until
+doc_to_text: !function utils.doc_to_text
+doc_to_target: answer
+process_results: !function utils.process_results
+generation_kwargs:
+  max_gen_toks: 7000
+  until:
+    - "</s>"
+metadata:
+  version: 0.1

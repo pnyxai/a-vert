@@ -1,0 +1,18 @@
+group: leaderboard_mmlu_pro_test
+task:
+  - leaderboard_mmlu_pro_test_chat
+  - leaderboard_mmlu_pro_test
+aggregate_metric_list:
+  - metric: acc
+    aggregation: mean
+    weight_by_size: true
+  - aggregation: mean
+    metric: exact_match
+    weight_by_size: true
+    filter_list: pass_all
+  - aggregation: mean
+    metric: a-vert_match
+    weight_by_size: true
+    filter_list: pass_all
+metadata:
+  version: 1.0

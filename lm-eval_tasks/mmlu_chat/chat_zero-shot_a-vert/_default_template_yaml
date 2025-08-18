@@ -6,7 +6,7 @@ doc_to_text: "{{question.strip()}}\nA. {{choices[0]}}\nB. {{choices[1]}}\nC. {{c
 doc_to_target: "{{['A', 'B', 'C', 'D'][answer]}}"
 process_results: !function utils.process_results
 generation_kwargs:
-  max_gen_toks: 2048
+  max_gen_toks: 7000
   until:
     - "</s>"
 filter_list:

@@ -1,10 +1,13 @@
+import string
 import re
 import numpy as np
+from copy import deepcopy
 import os
 from scipy import spatial
 
 from a_vert import processing as a_vert
 from a_vert import embedding_tools as a_vert_tools
+
 
 # ---- Here we set the a-vert configuration for Qwen3-Reranker-0.6B-seq-cls
 # Method : embedding / rerank
@@ -143,12 +146,22 @@ def process_results(doc, results):
        
     # Get the data
     response = results[0]
-    target_idx = doc["answer"]
-    choices = doc["choices"]
+    target_idx = doc["answer_index"]
+    choices = doc["options"]
 
     # Evaluate the document with the given model response
     results = doc_eval(response, target_idx, choices)
 
     return results
 
+
+
+def doc_to_text(doc):
+    doc_to_text = f"{doc['question']}\n"
+
+    for i in range(len(doc["options"])):
+        doc_to_text += f"{string.ascii_uppercase[i]}. {doc['options'][i]}\n"
+
+    # doc_to_text += "Answer:"
+    return doc_to_text
 
