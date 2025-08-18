@@ -13,6 +13,14 @@ task:
       metric: a-vert_match
       weight_by_size: true
       filter_list: pass_all
+    - aggregation: mean
+      metric: semscore_match
+      weight_by_size: true
+      filter_list: pass_all
+    - aggregation: mean
+      metric: semscore
+      weight_by_size: true
+      filter_list: pass_all
 aggregate_metric_list:
   - aggregation: mean
     metric: exact_match
@@ -20,6 +28,14 @@ aggregate_metric_list:
     filter_list: pass_all
   - aggregation: mean
     metric: a-vert_match
+    weight_by_size: true
+    filter_list: pass_all
+  - aggregation: mean
+    metric: semscore_match
+    weight_by_size: true
+    filter_list: pass_all
+  - aggregation: mean
+    metric: semscore
     weight_by_size: true
     filter_list: pass_all
 metadata:

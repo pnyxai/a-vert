@@ -13,7 +13,7 @@ def tei_embedding_call(text, tei_endpoint):
                "truncation_direction": "Left"
                }
     headers = {"Content-Type": "application/json"}
-    response = requests.post(tei_endpoint, data=json.dumps(payload), headers=headers)
+    response = requests.post(tei_endpoint+'/embed', data=json.dumps(payload), headers=headers)
     embedding = np.array(json.loads(response.text))
     return embedding
 
@@ -26,7 +26,7 @@ def vllm_embedding_call(text, vllm_endpoint, vllm_model_name):
         "encoding_format": "float"
     }
     headers = {"Content-Type": "application/json"}
-    response = requests.post(vllm_endpoint, data=json.dumps(payload), headers=headers)
+    response = requests.post(vllm_endpoint+'/v1/embeddings', data=json.dumps(payload), headers=headers)
     response = json.loads(response.text)
     embedding = np.array([ a['embedding'] for a in response['data']])
     return embedding
@@ -117,7 +117,7 @@ def tei_rerank_call(query, targets, tei_rerank_endpoint):
             "texts": targets,
         }
     headers = {"Content-Type": "application/json"}
-    response = requests.post(tei_rerank_endpoint, data=json.dumps(payload), headers=headers)
+    response = requests.post(tei_rerank_endpoint+'/rerank', data=json.dumps(payload), headers=headers)
     response = json.loads(response.text)
 
     total_ranks = len(response)
@@ -148,7 +148,7 @@ def vllm_rerank_call(query, targets, vllm_rerank_endpoint, vllm_model_name):
             "model": vllm_model_name,
         }
     headers = {"Content-Type": "application/json"}
-    response = requests.post(vllm_rerank_endpoint, data=json.dumps(payload), headers=headers)
+    response = requests.post(vllm_rerank_endpoint+'/v1/rerank', data=json.dumps(payload), headers=headers)
     response = json.loads(response.text)
 
     total_ranks = len(response['results'])
