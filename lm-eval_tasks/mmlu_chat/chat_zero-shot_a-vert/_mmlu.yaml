@@ -1,0 +1,98 @@
+group: mmlu_chat
+group_alias: mmlu (generative)
+task:
+  - group: stem
+    task:
+      - mmlu_stem_chat_generative
+    aggregate_metric_list:
+      - metric: exact_match
+        weight_by_size: True
+        filter_list: pass_all
+      - aggregation: mean
+        metric: a-vert_match
+        weight_by_size: true
+        filter_list: pass_all
+      - aggregation: mean
+        metric: semscore_match
+        weight_by_size: true
+        filter_list: pass_all
+      - aggregation: mean
+        metric: semscore
+        weight_by_size: true
+        filter_list: pass_all
+  - group: other
+    task:
+      - mmlu_other_chat_generative
+    aggregate_metric_list:
+      - metric: exact_match
+        weight_by_size: True
+        filter_list: pass_all
+      - aggregation: mean
+        metric: a-vert_match
+        weight_by_size: true
+        filter_list: pass_all
+      - aggregation: mean
+        metric: semscore_match
+        weight_by_size: true
+        filter_list: pass_all
+      - aggregation: mean
+        metric: semscore
+        weight_by_size: true
+        filter_list: pass_all
+  - group: social sciences
+    task:
+      - mmlu_social_sciences_chat_generative
+    aggregate_metric_list:
+      - metric: exact_match
+        weight_by_size: True
+        filter_list: pass_all
+      - aggregation: mean
+        metric: a-vert_match
+        weight_by_size: true
+        filter_list: pass_all
+      - aggregation: mean
+        metric: semscore_match
+        weight_by_size: true
+        filter_list: pass_all
+      - aggregation: mean
+        metric: semscore
+        weight_by_size: true
+        filter_list: pass_all
+  - group: humanities
+    task:
+      - mmlu_humanities_chat_generative
+    aggregate_metric_list:
+      - metric: exact_match
+        weight_by_size: True
+        filter_list: pass_all
+      - aggregation: mean
+        metric: a-vert_match
+        weight_by_size: true
+        filter_list: pass_all
+      - aggregation: mean
+        metric: semscore_match
+        weight_by_size: true
+        filter_list: pass_all
+      - aggregation: mean
+        metric: semscore
+        weight_by_size: true
+        filter_list: pass_all
+aggregate_metric_list:
+  - aggregation: mean
+    metric: exact_match
+    weight_by_size: true
+    filter_list: pass_all
+  - aggregation: mean
+    metric: a-vert_match
+    weight_by_size: true
+    filter_list: pass_all
+  - aggregation: mean
+    metric: semscore_match
+    weight_by_size: true
+    filter_list: pass_all
+  - aggregation: mean
+    metric: semscore
+    weight_by_size: true
+    filter_list: pass_all
+metadata:
+  version: 2
