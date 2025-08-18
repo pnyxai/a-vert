@@ -5,9 +5,6 @@ from copy import deepcopy
 import os
 from scipy import spatial
 
-# TODO: Replace with package!
-import sys
-sys.path.append('/')
 from a_vert import processing as a_vert
 from a_vert import embedding_tools as a_vert_tools
 

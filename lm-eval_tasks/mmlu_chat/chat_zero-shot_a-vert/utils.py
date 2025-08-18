@@ -5,9 +5,6 @@ from copy import deepcopy
 import os
 from scipy import spatial
 
-# TODO: Replace with package!
-import sys
-sys.path.append('/')
 from a_vert import processing as a_vert
 from a_vert import embedding_tools as a_vert_tools
 
@@ -145,11 +142,7 @@ def doc_eval(pred, target_idx, choices):
 def process_results(doc, results):
     """Custom processing function used to implement "a-vert" metric.
     """
-
-    # Assert we are evaluating a single target. This is a limitation of this 
-    # bAbI implementation
-    assert len(results) == 1, "only single predictions are supported"
-    
+       
     # Get the data
     response = results[0]
     target_idx = doc["answer"]
