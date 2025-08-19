@@ -1,7 +1,6 @@
-import string
+from functools import partial
 import re
 import numpy as np
-from copy import deepcopy
 import os
 from scipy import spatial
 
@@ -156,12 +155,38 @@ def process_results(doc, results):
 
 
 
-def doc_to_text(doc):
-    doc_to_text = f"{doc['question']}\n"
 
-    for i in range(len(doc["options"])):
-        doc_to_text += f"{string.ascii_uppercase[i]}. {doc['options'][i]}\n"
 
-    # doc_to_text += "Answer:"
-    return doc_to_text
+choices = [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P"
+]
 
+def format_example(example, including_options=True):
+    prompt = ""
+    # prompt += "Question:\n"
+    question = example["question"]
+    if including_options:
+        options = example["options"]
+        prompt += question + "\n"
+        prompt += "Options:\n"
+        for i, opt in enumerate(options):
+            prompt += "{}. {}\n".format(choices[i], opt)
+    return prompt
+
+
+doc_to_text = partial(format_example, including_options=True)

@@ -1,0 +1,6 @@
+"dataset_name": "category_engineering"
+"description": "The following are questions on the subject of : engineering.\n\n"
+"include": "_default_template_yaml"
+"tag": "mmlu_pro_categories_leaderboard-all"
+"task": "mmlu_pro-category-leaderboard_engineering"
+"task_alias": "MMLU Pro category engineering"

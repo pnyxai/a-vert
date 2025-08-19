@@ -1,0 +1,6 @@
+"dataset_name": "category_math"
+# "description": "The following are questions on the subject of : math.\n\n"
+"include": "_default_template_yaml"
+"tag": "mmlu_pro_categories-all"
+"task": "mmlu_pro-category_math"
+"task_alias": "MMLU Pro category math"

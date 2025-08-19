@@ -228,6 +228,7 @@ locations =[
     "garden",
     "kitchen",
     "bedroom",
+    "park"
 ]
 motivations = [
     "hungry",
@@ -261,7 +262,7 @@ induction_actor = ['Lily', 'Bernhard', 'Greg', 'Julius', 'Brian']
 shapes = ['square', 'rectangle', 'triangle', 'sphere']
 times_list = ['yesterday', 'this morning', 'this afternoon', 'this evening']
 directions = [' '.join(p) for p in itertools.product(["north", "south", "east", "west"], repeat=2)]
-polar = ["yes", "no"]
+polar = ["yes", "no", "maybe"]
 more_actors_task5 = [
     "Fred",
     "Jeff",

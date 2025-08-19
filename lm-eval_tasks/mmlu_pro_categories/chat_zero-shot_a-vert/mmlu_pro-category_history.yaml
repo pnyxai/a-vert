@@ -1,0 +1,6 @@
+"dataset_name": "category_history"
+# "description": "The following are questions on the subject of : history.\n\n"
+"include": "_default_template_yaml"
+"tag": "mmlu_pro_categories-all"
+"task": "mmlu_pro-category_history"
+"task_alias": "MMLU Pro category history"

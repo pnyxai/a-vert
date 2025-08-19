@@ -1,0 +1,42 @@
+group: mmlu_pro_categories
+group_alias: mmlu pro categories (generative)
+task:
+  - group: mmlu_pro_categories-all
+    task:
+      - mmlu_pro_categories-all
+    aggregate_metric_list:
+    - aggregation: mean
+      metric: exact_match
+      weight_by_size: true
+      filter_list: pass_all
+    - aggregation: mean
+      metric: a-vert_match
+      weight_by_size: true
+      filter_list: pass_all
+    - aggregation: mean
+      metric: semscore_match
+      weight_by_size: true
+      filter_list: pass_all
+    - aggregation: mean
+      metric: semscore
+      weight_by_size: true
+      filter_list: pass_all
+aggregate_metric_list:
+  - aggregation: mean
+    metric: exact_match
+    weight_by_size: true
+    filter_list: pass_all
+  - aggregation: mean
+    metric: a-vert_match
+    weight_by_size: true
+    filter_list: pass_all
+  - aggregation: mean
+    metric: semscore_match
+    weight_by_size: true
+    filter_list: pass_all
+  - aggregation: mean
+    metric: semscore
+    weight_by_size: true
+    filter_list: pass_all
+metadata:
+  version: 1

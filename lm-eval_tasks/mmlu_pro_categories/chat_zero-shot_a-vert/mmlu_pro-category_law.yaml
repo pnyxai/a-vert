@@ -1,0 +1,6 @@
+"dataset_name": "category_law"
+# "description": "The following are questions on the subject of : law.\n\n"
+"include": "_default_template_yaml"
+"tag": "mmlu_pro_categories-all"
+"task": "mmlu_pro-category_law"
+"task_alias": "MMLU Pro category law"

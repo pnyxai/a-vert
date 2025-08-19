@@ -1,0 +1,16 @@
+group: mmlu_pro_categories_leaderboard
+group_alias: mmlu pro categories (leaderboard)
+task:
+  - group: mmlu_pro_categories_leaderboard-all
+    task:
+      - mmlu_pro_categories_leaderboard-all
+    aggregate_metric_list:
+    - aggregation: mean
+      metric: acc
+      weight_by_size: true
+aggregate_metric_list:
+  - aggregation: mean
+    metric: acc
+    weight_by_size: true
+metadata:
+  version: 1
