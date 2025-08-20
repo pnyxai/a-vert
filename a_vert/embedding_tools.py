@@ -14,6 +14,10 @@ def tei_embedding_call(text, tei_endpoint):
                }
     headers = {"Content-Type": "application/json"}
     response = requests.post(tei_endpoint+'/embed', data=json.dumps(payload), headers=headers)
+    if response.status_code != 200:
+        print(response.status_code)
+        print(response.text)
+        raise ValueError("Failed to call endpoint.")
     embedding = np.array(json.loads(response.text))
     return embedding
 
@@ -27,6 +31,10 @@ def vllm_embedding_call(text, vllm_endpoint, vllm_model_name):
     }
     headers = {"Content-Type": "application/json"}
     response = requests.post(vllm_endpoint+'/v1/embeddings', data=json.dumps(payload), headers=headers)
+    if response.status_code != 200:
+        print(response.status_code)
+        print(response.text)
+        raise ValueError("Failed to call endpoint.")
     response = json.loads(response.text)
     embedding = np.array([ a['embedding'] for a in response['data']])
     return embedding
@@ -69,16 +77,12 @@ def get_embedding(text, endpoint, endpoint_type, model_name=None, max_batch_size
 
 def check_and_apply_template(template, placeholder, query):
     if template is not None:
+        # Check if the template contains the string to replace
         if placeholder not in template:
             err = f"Instruction must contain a {placeholder} placeholder"
             raise ValueError(err)
-        if placeholder == "{query}":
-            return template.format(query=placeholder)
-        elif placeholder == "{document}":
-            return template.format(document=placeholder)
-        else:
-            err = f"Placeholder not supported: {placeholder}"
-            raise ValueError(err)
+        # Replace
+        return template.replace(placeholder,query)
     else:
         return query
 
@@ -118,6 +122,10 @@ def tei_rerank_call(query, targets, tei_rerank_endpoint):
         }
     headers = {"Content-Type": "application/json"}
     response = requests.post(tei_rerank_endpoint+'/rerank', data=json.dumps(payload), headers=headers)
+    if response.status_code != 200:
+        print(response.status_code)
+        print(response.text)
+        raise ValueError("Failed to call endpoint.")
     response = json.loads(response.text)
 
     total_ranks = len(response)
@@ -146,9 +154,15 @@ def vllm_rerank_call(query, targets, vllm_rerank_endpoint, vllm_model_name):
             "query": query,
             "documents": targets,
             "model": vllm_model_name,
+            # "max_tokens_per_doc": 16000,
         }
     headers = {"Content-Type": "application/json"}
     response = requests.post(vllm_rerank_endpoint+'/v1/rerank', data=json.dumps(payload), headers=headers)
+    if response.status_code != 200:
+        print(response.status_code)
+        print(response.text)
+        raise ValueError("Failed to call endpoint.")
+
     response = json.loads(response.text)
 
     total_ranks = len(response['results'])
@@ -156,6 +170,8 @@ def vllm_rerank_call(query, targets, vllm_rerank_endpoint, vllm_model_name):
         print(query)
         print(targets)
         print(response)
+        print(len(total_ranks))
+        print(len(targets))
         raise ValueError("Received less scores than targets from endpoint, cannot continue.")
 
     # Process results and get scores in same order as targets

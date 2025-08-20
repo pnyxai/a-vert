@@ -91,7 +91,7 @@ def doc_eval(pred, refs):
                                )
 
     # Process all candidate groups
-    response_group_distribution, _ = a_vert.get_candidate_groups_embedings_ranking([pred],
+    response_group_distribution, _ = a_vert.get_candidate_groups_embedings_ranking(pred,
                                            group_texts_dict,
                                            AVERT_MODEL_ENDPOINT,
                                            AVERT_ENDPOINT_TYPE,
@@ -110,9 +110,9 @@ def doc_eval(pred, refs):
     # ----------------------- SemScore -----------------------------------------
     if SEMSCORE_MODEL_ENDPOINT is not None:
         # Embed target
-        target_emb = np.squeeze(a_vert_tools.get_embedding([refs], SEMSCORE_MODEL_ENDPOINT, SEMSCORE_ENDPOINT_TYPE, model_name=SEMSCORE_MODEL_NAME))
+        target_emb = np.squeeze(a_vert_tools.get_embedding(refs, SEMSCORE_MODEL_ENDPOINT, SEMSCORE_ENDPOINT_TYPE, model_name=SEMSCORE_MODEL_NAME))
         # Embed response
-        response_emb = np.squeeze(a_vert_tools.get_embedding([pred], SEMSCORE_MODEL_ENDPOINT, SEMSCORE_ENDPOINT_TYPE, model_name=SEMSCORE_MODEL_NAME))
+        response_emb = np.squeeze(a_vert_tools.get_embedding(pred, SEMSCORE_MODEL_ENDPOINT, SEMSCORE_ENDPOINT_TYPE, model_name=SEMSCORE_MODEL_NAME))
         # Calculate cosine similarity
         semscore = spatial.distance.cosine(response_emb, target_emb)
         # Apply threshold
