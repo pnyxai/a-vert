@@ -38,7 +38,7 @@ SEMSCORE_MODEL_NAME = os.getenv("SEMSCORE_MODEL_NAME", None)
 if SEMSCORE_MODEL_NAME is None and  (SEMSCORE_ENDPOINT_TYPE == "vllm" or SEMSCORE_MODEL_ENDPOINT=="openai"):
     raise ValueError("SEMSCORE_MODEL_NAME environment variable is not set. This is required for vLLM or OpenAI endpoint to function.")
 
-SEMSCORE_THRESHOLD = 0.75
+SEMSCORE_THRESHOLD = 0.6237373737373737
 
 def filter_response(pred):
     """This function is used by the "exact_match" metric to try to clean the
@@ -69,6 +69,8 @@ def doc_eval(pred, target_idx, choices):
                     group.
     """
 
+
+    correct_group_text, wrong_group_text, correct_group_idxs, wrong_group_idxs = get_mmlu_options(target_idx, choices)
     target = choices[target_idx]
 
     # ----------------------- EXACT MATCH --------------------------------------
@@ -82,14 +84,14 @@ def doc_eval(pred, target_idx, choices):
 
     # ----------------------- A-VERT -------------------------------------------
     # Construct the wrong candidates group
-    group_texts_dict = a_vert.construct_candidate_groups([target], 
-                               choices, 
+    group_texts_dict = a_vert.construct_candidate_groups(correct_group_text, 
+                               wrong_group_text, 
                                ["correct", "wrong"], 
                                enhance=True,
                                with_options=True,
                                option_symbol="letters",
-                               correct_group_idxs=[target_idx],
-                               wrong_group_idxs=[a for a in range(len(choices)) if a != target_idx]
+                               correct_group_idxs=correct_group_idxs,
+                               wrong_group_idxs=wrong_group_idxs
                                )
 
     # Process all candidate groups
@@ -116,7 +118,7 @@ def doc_eval(pred, target_idx, choices):
         # Embed response
         response_emb = np.squeeze(a_vert_tools.get_embedding(pred, SEMSCORE_MODEL_ENDPOINT, SEMSCORE_ENDPOINT_TYPE, model_name=SEMSCORE_MODEL_NAME))
         # Calculate cosine similarity
-        semscore = spatial.distance.cosine(response_emb, target_emb)
+        semscore = 1-spatial.distance.cosine(response_emb, target_emb)
         # Apply threshold
         semscore_match = True
         if semscore < SEMSCORE_THRESHOLD:
@@ -150,5 +152,25 @@ def process_results(doc, results):
     results = doc_eval(response, target_idx, choices)
 
     return results
+
+# ------------------------------------------------------------------------------
+# --------------------- MMLU specific code -------------------------------------
+# ------------------------------------------------------------------------------
+
+def get_mmlu_options(target_idx, choices):
+
+    correct_group_text = list()
+    wrong_group_text = list()
+    correct_group_idxs = list()
+    wrong_group_idxs = list()
+    for idx in range(len(choices)):
+        if idx == target_idx:
+            correct_group_text.append(choices[idx])
+            correct_group_idxs.append(idx)
+        else:
+            wrong_group_text.append(choices[idx])
+            wrong_group_idxs.append(idx)
+
+    return correct_group_text, wrong_group_text, correct_group_idxs, wrong_group_idxs
 
 
