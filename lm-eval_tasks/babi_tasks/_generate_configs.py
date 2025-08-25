@@ -52,52 +52,54 @@ if __name__ == "__main__":
     with open(args.base_yaml_path, encoding="utf-8") as f:
         base_yaml = yaml.full_load(f)
 
-    ALL_TASKS = []
-    for task_id, task_name in tqdm(TASKS.items()):
-        split_name = f"task_{task_id}-{task_name}"
-        task_name_use = split_name
-        if int(task_id)<10:
-            # To keep order correctly on display screen
-            task_name_use = f"task_0{task_id}-{task_name}"
-        if split_name not in ALL_TASKS:
-            ALL_TASKS.append(split_name)
+    
+    for set in ["_tasks", "_tasks_completions"]:
+        ALL_TASKS = []
+        for task_id, task_name in tqdm(TASKS.items()):
+            split_name = f"task_{task_id}-{task_name}"
+            task_name_use = split_name
+            if int(task_id)<10:
+                # To keep order correctly on display screen
+                task_name_use = f"task_0{task_id}-{task_name}"
+            if split_name not in ALL_TASKS:
+                ALL_TASKS.append(split_name)
 
-        # In the chat template, this is used as the system prompt
-        description = ""
+            # In the chat template, this is used as the system prompt
+            description = ""
 
-        yaml_dict = {
-            "include": base_yaml_name,
-            "tag": "babi-all-tasks",
-            "task": f"babi-{task_name_use}",
-            "task_alias": task_name_use.replace("_", " ").replace("-", " - "),
-            "dataset_name": split_name,
-            "description": description,
-        }
+            yaml_dict = {
+                "include": base_yaml_name,
+                "tag": f"babi{set}-all",
+                "task": f"babi{set}-{task_name_use}",
+                "task_alias": task_name_use.replace("_", " ").replace("-", " - "),
+                "dataset_name": split_name,
+                "description": description,
+            }
 
-        file_save_path = args.save_prefix_path + f"_{task_name_use}.yaml"
-        eval_logger.info(f"Saving yaml for subset {task_name_use} to {file_save_path}")
+            file_save_path = args.save_prefix_path + f"_{task_name_use}.yaml"
+            eval_logger.info(f"Saving yaml for subset {task_name_use} to {file_save_path}")
+            with open(file_save_path, "w", encoding="utf-8") as yaml_file:
+                yaml.dump(
+                    yaml_dict,
+                    yaml_file,
+                    allow_unicode=True,
+                    default_style='"',
+                )
+
+
+        babi_subcategories = [f"babi{set}-{task}" for task in ALL_TASKS]
+
+        
+        file_save_path = args.save_prefix_path + set + ".yaml"
+
+        eval_logger.info(f"Saving benchmark config to {file_save_path}")
         with open(file_save_path, "w", encoding="utf-8") as yaml_file:
             yaml.dump(
-                yaml_dict,
+                {
+                    "group": f"babi{set}-all",
+                    "task": babi_subcategories,
+                },
                 yaml_file,
-                allow_unicode=True,
-                default_style='"',
+                indent=4,
+                default_flow_style=False,
             )
-
-
-    babi_subcategories = [f"babi-{task}" for task in ALL_TASKS]
-
-    
-    file_save_path = args.save_prefix_path + ".yaml"
-
-    eval_logger.info(f"Saving benchmark config to {file_save_path}")
-    with open(file_save_path, "w", encoding="utf-8") as yaml_file:
-        yaml.dump(
-            {
-                "group": "babi-all",
-                "task": babi_subcategories,
-            },
-            yaml_file,
-            indent=4,
-            default_flow_style=False,
-        )

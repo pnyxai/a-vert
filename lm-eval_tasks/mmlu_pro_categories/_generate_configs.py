@@ -44,8 +44,9 @@ if __name__ == "__main__":
     with open(args.base_yaml_path, encoding="utf-8") as f:
         base_yaml = yaml.full_load(f)
 
-    ALL_TASKS = []
+    
     for set in ["_categories", "_categories_leaderboard"]:
+        ALL_TASKS = []
         for category_name in tqdm(CATEGORIES):
             split_name = f"category_{category_name}"
             task_name_use = f"mmlu_pro{set}-{split_name}"

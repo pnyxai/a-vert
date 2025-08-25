@@ -6,14 +6,37 @@ from scipy import spatial
 from a_vert import processing as a_vert
 from a_vert import embedding_tools as a_vert_tools
 
-# ---- Here we set the a-vert configuration for Qwen3-Reranker-0.6B-seq-cls
-# Method : embedding / rerank
+# ---- Different a-vert configs
+# 
+# Qwen3-Reranker Family : Qwen3-Reranker-0.6B-seq-cls, Qwen3-Reranker-4B-seq-cls
+#     
+# AVERT_METHOD = "rerank"
+# DOCUMENT_TEMPLATE = "<Document>: {document}<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
+# QUERY_TEMPLATE = """<|im_start|>system\nJudge whether the Document meets the requirements based on the Query and the Instruct provided. Note that the answer can only be "yes" or "no".<|im_end|>\n<|im_start|>user\n <Instruct>: Find the document that better represents the meaning in the query. Check for any doubts about the question or options. Focus on exact numbers, dates, or symbols.\n<Query>: {query}\n"""
+# 
+# Rerankers without instruction : gte-reranker-modernbert-base, jina-reranker-v2-base-multilingual
+# 
 AVERT_METHOD = "rerank"
-# These are the templates required by the model
-DOCUMENT_TEMPLATE = "<Document>: {document}<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
-QUERY_TEMPLATE = """<|im_start|>system\nJudge whether the Document meets the requirements based on the Query and the Instruct provided. Note that the answer can only be "yes" or "no".<|im_end|>\n<|im_start|>user\n <Instruct>: Find the document that better represents the meaning in the query. Check for any doubts about the question or options. Focus on exact numbers, dates, or symbols.\n<Query>: {query}\n"""
-# Grouping to be applied to candidate groups
+DOCUMENT_TEMPLATE = None
+QUERY_TEMPLATE = None
+# 
+# Embedding with instruction : Qwen3-Embedding-0.6B, Qwen3-Embedding-4B, multilingual-e5-large-instruct 
+# 
+# AVERT_METHOD = "embedding"
+# DOCUMENT_TEMPLATE = None
+# QUERY_TEMPLATE = 'Instruct: Find the document that better represents the meaning in the query. Check for any doubts about the question or options. Focus on exact numbers, dates, or symbols.\nQuery:{query}'
+# 
+# Embedding without instruction : gte-modernbert-base
+# 
+# AVERT_METHOD = "embedding"
+# DOCUMENT_TEMPLATE = None
+# QUERY_TEMPLATE = None
+
 GROUPING="max"
+
+ENCHANCE = True
+
+MAX_LEN = 1000
 
 # This environment variable contains the endpoint to the selected model
 AVERT_MODEL_ENDPOINT = os.getenv("AVERT_MODEL_ENDPOINT", None)
@@ -87,8 +110,8 @@ def doc_eval(pred, target_idx, choices):
     group_texts_dict = a_vert.construct_candidate_groups(correct_group_text, 
                                wrong_group_text, 
                                ["correct", "wrong"], 
-                               enhance=True,
-                               with_options=True,
+                               enhance=ENCHANCE,
+                               with_options=ENCHANCE,
                                option_symbol="letters",
                                correct_group_idxs=correct_group_idxs,
                                wrong_group_idxs=wrong_group_idxs
@@ -104,7 +127,8 @@ def doc_eval(pred, target_idx, choices):
                                            query_template=QUERY_TEMPLATE,
                                            document_template=DOCUMENT_TEMPLATE,
                                            grouping_method=GROUPING, 
-                                           verbose=False
+                                           verbose=False,
+                                           max_len=MAX_LEN
                                            )
     # Check if this is a match
     a_vert_match = True
@@ -132,6 +156,8 @@ def doc_eval(pred, target_idx, choices):
     # Compile and return
     results = {
         "exact_match": exact_match,
+        "a-vert_correct_score": response_group_distribution["correct"], 
+        "a-vert_wrong_score": response_group_distribution["wrong"],
         "a-vert_match": a_vert_match,
         "semscore": semscore,
         "semscore_match": semscore_match,

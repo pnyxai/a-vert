@@ -31,6 +31,17 @@ def vllm_embedding_call(text, vllm_endpoint, vllm_model_name):
     }
     headers = {"Content-Type": "application/json"}
     response = requests.post(vllm_endpoint+'/v1/embeddings', data=json.dumps(payload), headers=headers)
+    if response.status_code == 400:
+        if "This model's maximum context length is" in json.loads(response.text)['error']["message"]:
+            # vLLM does not crop embedding inputs... so we hack away...
+            print(response.text)
+            # Too long, lets crop and call   
+            this_len = len(text.split(" "))
+            new_len = int(this_len/2)
+            print(new_len)
+            text = truncate(text, new_len)
+            return vllm_embedding_call(text, vllm_endpoint, vllm_model_name)
+
     if response.status_code != 200:
         print(response.status_code)
         print(response.text)
@@ -42,7 +53,7 @@ def vllm_embedding_call(text, vllm_endpoint, vllm_model_name):
 
 
 
-def get_embedding(text, endpoint, endpoint_type, model_name=None, max_batch_size=32):
+def get_embedding(text, endpoint, endpoint_type, model_name=None, max_batch_size=32, max_len = -1):
     """Call the Text-Embedding-Inference endpoint handling the endpoint batch 
     size.
     """
@@ -75,16 +86,24 @@ def get_embedding(text, endpoint, endpoint_type, model_name=None, max_batch_size
     else:
         return embedding_call(text)
 
-def check_and_apply_template(template, placeholder, query):
+def truncate(prompt, max_len):
+    if max_len > 0:
+        if len(prompt.split(" ")) > max_len:
+            prompt = " ".join(prompt.split(" ")[-max_len:])
+    return prompt
+
+def check_and_apply_template(template, placeholder, query, max_len=-1):
     if template is not None:
         # Check if the template contains the string to replace
         if placeholder not in template:
             err = f"Instruction must contain a {placeholder} placeholder"
             raise ValueError(err)
         # Replace
-        return template.replace(placeholder,query)
+        prompt = template.replace(placeholder,query)
     else:
-        return query
+        prompt =  query
+    
+    return truncate(prompt, max_len)
 
     
 def calculate_embedding_distances(model_response,
@@ -96,12 +115,13 @@ def calculate_embedding_distances(model_response,
                                   document_template=None,
                                   distance_fn = spatial.distance.cosine, 
                                   batch_size=32,
+                                  max_len=-1,
                                   ):
     # Calculate targets embeddings
-    batch_to_embedding = [check_and_apply_template(document_template, "{document}", t) for t in batch]
+    batch_to_embedding = [check_and_apply_template(document_template, "{document}", t, max_len=max_len) for t in batch]
     targets_embeddings = get_embedding(batch_to_embedding, endpoint, endpoint_type, model_name=model_name, max_batch_size=batch_size)
     # Get model response embedding
-    model_response_to_embedding = check_and_apply_template(query_template, "{query}", model_response)
+    model_response_to_embedding = check_and_apply_template(query_template, "{query}", model_response, max_len=max_len)
     model_response_embedding = np.squeeze(get_embedding(model_response_to_embedding, endpoint, endpoint_type, model_name=model_name, max_batch_size=batch_size))
 
     # Calculate the distances
@@ -158,6 +178,20 @@ def vllm_rerank_call(query, targets, vllm_rerank_endpoint, vllm_model_name):
         }
     headers = {"Content-Type": "application/json"}
     response = requests.post(vllm_rerank_endpoint+'/v1/rerank', data=json.dumps(payload), headers=headers)
+    if response.status_code == 400:
+        if "This model's maximum context length is" in json.loads(response.text)['error']["message"]:
+            # vLLM does not crop embedding inputs... so we hack away...
+            print(response.text)
+            # Too long, lets crop and call   
+            len_max = len(query.split(" "))
+            for this_target in targets:
+                if len(this_target.split(" ")) > len_max:
+                    len_max = len(this_target.split(" "))
+            new_len = int(len_max/2)
+            print(new_len)
+            query = truncate(query, new_len)
+            targets = [truncate(a, new_len) for a in targets]
+            return vllm_rerank_call(query, targets, vllm_rerank_endpoint, vllm_model_name)
     if response.status_code != 200:
         print(response.status_code)
         print(response.text)
@@ -224,12 +258,13 @@ def calculate_reranking_distances(model_response,
                                   model_name=None,
                                   query_template=None,
                                   document_template=None,
-                                  batch_size=32
+                                  batch_size=32,
+                                  max_len =-1
                                   ):
     
     # Calculate targets embeddings
-    batch_to_rank = [check_and_apply_template(document_template, "{document}", t) for t in batch]
-    model_response_to_rank = check_and_apply_template(query_template, "{query}", model_response)
+    batch_to_rank = [check_and_apply_template(document_template, "{document}", t, max_len=max_len) for t in batch]
+    model_response_to_rank = check_and_apply_template(query_template, "{query}", model_response, max_len=max_len)
 
     
     # Get model response rerank
