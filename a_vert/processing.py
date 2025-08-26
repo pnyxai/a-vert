@@ -18,7 +18,6 @@ def get_candidate_groups_embedings_ranking(model_response,
                                            distance_fn = spatial.distance.cosine, 
                                            grouping_method="max", 
                                            batch_size=32,
-                                           max_len=-1,
                                            verbose=False,
                                            ):
     """This function takes a dictionary of candidate groups. Each element of the
@@ -58,7 +57,6 @@ def get_candidate_groups_embedings_ranking(model_response,
                                     document_template=document_template,
                                     distance_fn = distance_fn, 
                                     batch_size=batch_size,
-                                    max_len=max_len,
                                     )
     elif method == "rerank":
         all_distances = emb.calculate_reranking_distances(model_response,
@@ -68,7 +66,6 @@ def get_candidate_groups_embedings_ranking(model_response,
                                   model_name=model_name,
                                   query_template=query_template,
                                   document_template=document_template,
-                                  max_len=max_len,
                                   )
     else:
         raise ValueError("Embedding distance calculation method not supported.")
