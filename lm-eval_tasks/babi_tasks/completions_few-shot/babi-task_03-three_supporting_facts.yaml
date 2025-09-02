@@ -1,0 +1,6 @@
+"dataset_name": "task_3-three_supporting_facts"
+"description": "The following are basic taks on the subject of : three supporting facts.\n\n"
+"include": "_default_template_yaml"
+"task": "babi_tasks_completions-task_03-three_supporting_facts"
+"task_alias": "babi task 03 - three supporting facts"
+"tag": "babi_tasks_completions-all"

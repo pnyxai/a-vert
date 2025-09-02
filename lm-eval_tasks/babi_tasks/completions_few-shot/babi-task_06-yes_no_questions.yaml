@@ -1,0 +1,6 @@
+"dataset_name": "task_6-yes_no_questions"
+"description": "The following are basic taks on the subject of : yes no questions.\n\n"
+"include": "_default_template_yaml"
+"task": "babi_tasks_completions-task_06-yes_no_questions"
+"task_alias": "babi task 06 - yes no questions"
+"tag": "babi_tasks_completions-all"

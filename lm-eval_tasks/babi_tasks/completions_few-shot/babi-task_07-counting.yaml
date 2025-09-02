@@ -1,0 +1,6 @@
+"dataset_name": "task_7-counting"
+"description": "The following are basic taks on the subject of : counting.\n\n"
+"include": "_default_template_yaml"
+"task": "babi_tasks_completions-task_07-counting"
+"task_alias": "babi task 07 - counting"
+"tag": "babi_tasks_completions-all"

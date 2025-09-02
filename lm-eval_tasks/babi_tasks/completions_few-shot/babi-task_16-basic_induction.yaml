@@ -1,0 +1,6 @@
+"dataset_name": "task_16-basic_induction"
+"description": "The following are basic taks on the subject of : basic induction.\n\n"
+"include": "_default_template_yaml"
+"task": "babi_tasks_completions-task_16-basic_induction"
+"task_alias": "babi task 16 - basic induction"
+"tag": "babi_tasks_completions-all"

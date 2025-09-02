@@ -1,0 +1,6 @@
+"dataset_name": "task_15-basic_deduction"
+"description": "The following are basic taks on the subject of : basic deduction.\n\n"
+"include": "_default_template_yaml"
+"task": "babi_tasks_completions-task_15-basic_deduction"
+"task_alias": "babi task 15 - basic deduction"
+"tag": "babi_tasks_completions-all"

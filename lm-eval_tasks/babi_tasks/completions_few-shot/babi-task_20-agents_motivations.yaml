@@ -1,0 +1,6 @@
+"dataset_name": "task_20-agents_motivations"
+"description": "The following are basic taks on the subject of : agents motivations.\n\n"
+"include": "_default_template_yaml"
+"task": "babi_tasks_completions-task_20-agents_motivations"
+"task_alias": "babi task 20 - agents motivations"
+"tag": "babi_tasks_completions-all"

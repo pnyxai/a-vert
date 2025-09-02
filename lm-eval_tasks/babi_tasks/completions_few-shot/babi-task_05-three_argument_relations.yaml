@@ -1,0 +1,6 @@
+"dataset_name": "task_5-three_argument_relations"
+"description": "The following are basic taks on the subject of : three argument relations.\n\n"
+"include": "_default_template_yaml"
+"task": "babi_tasks_completions-task_05-three_argument_relations"
+"task_alias": "babi task 05 - three argument relations"
+"tag": "babi_tasks_completions-all"

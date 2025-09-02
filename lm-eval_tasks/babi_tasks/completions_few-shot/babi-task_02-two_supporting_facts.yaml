@@ -1,0 +1,6 @@
+"dataset_name": "task_2-two_supporting_facts"
+"description": "The following are basic taks on the subject of : two supporting facts.\n\n"
+"include": "_default_template_yaml"
+"task": "babi_tasks_completions-task_02-two_supporting_facts"
+"task_alias": "babi task 02 - two supporting facts"
+"tag": "babi_tasks_completions-all"

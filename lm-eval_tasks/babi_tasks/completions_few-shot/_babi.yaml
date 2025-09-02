@@ -1,0 +1,18 @@
+group: babi_tasks_completions
+group_alias: babi (completions generative)
+task:
+  - group: babi_tasks_completions-all
+    task:
+      - babi_tasks_completions-all
+    aggregate_metric_list:
+    - aggregation: mean
+      metric: exact_match
+      weight_by_size: true
+      filter_list: get_response
+aggregate_metric_list:
+  - aggregation: mean
+    metric: exact_match
+    weight_by_size: true
+    filter_list: get_response
+metadata:
+  version: 1

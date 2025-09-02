@@ -12,15 +12,15 @@ from a_vert import embedding_tools as a_vert_tools
 # 
 # Qwen3-Reranker Family : Qwen3-Reranker-0.6B-seq-cls, Qwen3-Reranker-4B-seq-cls
 #     
-# AVERT_METHOD = "rerank"
-# DOCUMENT_TEMPLATE = "<Document>: {document}<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
-# QUERY_TEMPLATE = """<|im_start|>system\nJudge whether the Document meets the requirements based on the Query and the Instruct provided. Note that the answer can only be "yes" or "no".<|im_end|>\n<|im_start|>user\n <Instruct>: Find the document that better represents the meaning in the query. Check for any doubts about the question or options. Focus on exact numbers, dates, or symbols.\n<Query>: {query}\n"""
+AVERT_METHOD = "rerank"
+DOCUMENT_TEMPLATE = "<Document>: {document}<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
+QUERY_TEMPLATE = """<|im_start|>system\nJudge whether the Document meets the requirements based on the Query and the Instruct provided. Note that the answer can only be "yes" or "no".<|im_end|>\n<|im_start|>user\n <Instruct>: Find the document that better represents the meaning in the query. Check for any doubts about the question or options. Focus on exact numbers, dates, or symbols.\n<Query>: {query}\n"""
 # 
 # Rerankers without instruction : gte-reranker-modernbert-base, jina-reranker-v2-base-multilingual
 # 
-AVERT_METHOD = "rerank"
-DOCUMENT_TEMPLATE = None
-QUERY_TEMPLATE = None
+# AVERT_METHOD = "rerank"
+# DOCUMENT_TEMPLATE = None
+# QUERY_TEMPLATE = None
 # 
 # Embedding with instruction : Qwen3-Embedding-0.6B, Qwen3-Embedding-4B, multilingual-e5-large-instruct 
 # 
@@ -38,8 +38,6 @@ QUERY_TEMPLATE = None
 GROUPING="max"
 
 ENCHANCE = True
-
-MAX_LEN = 1000
 
 
 
@@ -127,7 +125,6 @@ def doc_eval(pred, refs, question, task):
                                            document_template=DOCUMENT_TEMPLATE,
                                            grouping_method=GROUPING, 
                                            verbose=False,
-                                           max_len=MAX_LEN
                                            )
     # Check if this is a match
     a_vert_match = True

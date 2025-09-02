@@ -1,0 +1,6 @@
+"dataset_name": "task_14-time_reasoning"
+"description": "The following are basic taks on the subject of : time reasoning.\n\n"
+"include": "_default_template_yaml"
+"task": "babi_tasks_completions-task_14-time_reasoning"
+"task_alias": "babi task 14 - time reasoning"
+"tag": "babi_tasks_completions-all"

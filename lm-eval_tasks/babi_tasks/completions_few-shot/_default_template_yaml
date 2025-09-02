@@ -1,0 +1,35 @@
+dataset_path: RawthiL/babi_tasks # based on Muennighoff/babi with per-tasks splits
+training_split: train
+validation_split: validation
+test_split: test
+fewshot_split: validation
+fewshot_config:
+  sampler: first_n
+num_fewshot: 3
+output_type: generate_until
+doc_to_text: "Passage: {{passage}}Question: {{question}}\nAnswer:"
+doc_to_target: "{{answer}}"
+generation_kwargs:
+  until:
+    - "\n"
+    - "Passage:"
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+    ignore_punctuation: true
+    ignore_case: true
+filter_list:
+  - name: get_response
+    filter:
+      # Filter everything after the first break line
+      - function: "regex"
+        regex_pattern: "^(.*?)(?=\\n|$)"
+      # Remove leading white spaces
+      - function: remove_whitespace
+      # function to ignore right white spaces or line breaks
+      - function: "regex"
+        regex_pattern: "^(.*?)\\s*$"
+      - function: take_first
+metadata:
+  version: 1.0

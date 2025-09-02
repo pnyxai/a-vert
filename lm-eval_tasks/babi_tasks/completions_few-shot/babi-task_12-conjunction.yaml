@@ -1,0 +1,6 @@
+"dataset_name": "task_12-conjunction"
+"description": "The following are basic taks on the subject of : conjunction.\n\n"
+"include": "_default_template_yaml"
+"task": "babi_tasks_completions-task_12-conjunction"
+"task_alias": "babi task 12 - conjunction"
+"tag": "babi_tasks_completions-all"

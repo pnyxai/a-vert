@@ -1,0 +1,6 @@
+"dataset_name": "task_13-compound_coreference"
+"description": "The following are basic taks on the subject of : compound coreference.\n\n"
+"include": "_default_template_yaml"
+"task": "babi_tasks_completions-task_13-compound_coreference"
+"task_alias": "babi task 13 - compound coreference"
+"tag": "babi_tasks_completions-all"

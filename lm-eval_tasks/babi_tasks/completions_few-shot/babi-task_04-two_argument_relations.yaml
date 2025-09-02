@@ -1,0 +1,6 @@
+"dataset_name": "task_4-two_argument_relations"
+"description": "The following are basic taks on the subject of : two argument relations.\n\n"
+"include": "_default_template_yaml"
+"task": "babi_tasks_completions-task_04-two_argument_relations"
+"task_alias": "babi task 04 - two argument relations"
+"tag": "babi_tasks_completions-all"

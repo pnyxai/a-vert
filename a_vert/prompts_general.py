@@ -112,7 +112,7 @@ def enhance_group(group_text, group_idxs, with_options=False, option_symbol="let
             # Add option candidates
             candidates = [
                 f"Therefore, the correct answer is option \"{symbol}\": \"{response}\"",
-                f"the answer is option \"{symbol}\": \"{response}\"",
+                f"the answer is option \"{symbol}\": \"{response}\"", # TODO : Fix after paper
             ]
             postion_responses += candidates
             # Track
