@@ -1,0 +1,5 @@
+dataset_name: temporalorder
+description: 'The following are basic taks (with answers) on the ability: temporalorder.'
+include: _default_template_yaml
+task: babisteps-task_07-temporalorder
+task_alias: task 07 - temporalorder

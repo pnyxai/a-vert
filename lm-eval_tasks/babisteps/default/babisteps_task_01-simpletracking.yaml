@@ -1,0 +1,5 @@
+dataset_name: simpletracking
+description: 'The following are basic taks (with answers) on the ability: simpletracking.'
+include: _default_template_yaml
+task: babisteps-task_01-simpletracking
+task_alias: task 01 - simpletracking

@@ -1,0 +1,4 @@
+dataset_name: listing
+include: _default_template_yaml
+task: babisteps-chat_zero_shot-task_04-listing
+task_alias: task 04 - listing

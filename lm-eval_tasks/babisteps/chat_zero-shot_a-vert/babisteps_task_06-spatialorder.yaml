@@ -1,0 +1,4 @@
+dataset_name: spatialorder
+include: _default_template_yaml
+task: babisteps-chat_zero_shot-task_06-spatialorder
+task_alias: task 06 - spatialorder

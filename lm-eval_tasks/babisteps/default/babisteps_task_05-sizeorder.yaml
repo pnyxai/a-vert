@@ -1,0 +1,5 @@
+dataset_name: sizeorder
+description: 'The following are basic taks (with answers) on the ability: sizeorder.'
+include: _default_template_yaml
+task: babisteps-task_05-sizeorder
+task_alias: task 05 - sizeorder

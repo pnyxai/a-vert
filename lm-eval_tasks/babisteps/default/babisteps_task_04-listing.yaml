@@ -1,0 +1,11 @@
+dataset_name: listing
+description: 'The following are basic taks (with answers) on the ability: listing.'
+include: _default_template_yaml
+task: babisteps-task_04-listing
+task_alias: task 04 - listing
+fewshot_config:
+  sampler: default
+  doc_to_text: !function utils.listing_fewshot_to_text
+  doc_to_target: ""
+doc_to_text: !function utils.listing_doc_to_text
+process_results: !function utils.process_results_listing

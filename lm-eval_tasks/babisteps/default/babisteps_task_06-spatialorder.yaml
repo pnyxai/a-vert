@@ -1,0 +1,5 @@
+dataset_name: spatialorder
+description: 'The following are basic taks (with answers) on the ability: spatialorder.'
+include: _default_template_yaml
+task: babisteps-task_06-spatialorder
+task_alias: task 06 - spatialorder

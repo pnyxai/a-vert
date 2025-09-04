@@ -1,0 +1,9 @@
+dataset_name: listing
+include: _default_template_yaml
+task: babisteps-chat-cot-task_04-listing
+task_alias: task 04 - listing
+fewshot_config:
+  sampler: default
+  doc_to_text: !function utils.fewshot_to_text
+  doc_to_target: !function utils.listing_fewshot_doc_to_target
+process_results: !function utils.process_results_listing

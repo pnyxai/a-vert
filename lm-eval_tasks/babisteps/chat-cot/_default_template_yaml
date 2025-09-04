@@ -1,0 +1,50 @@
+dataset_path: PNYX/babisteps
+training_split: train
+validation_split: validation
+test_split: test
+description: "Never use Markdown or LaTex format."
+fewshot_split: validation
+fewshot_config:
+  sampler: default
+  doc_to_text: !function utils.fewshot_to_text
+  doc_to_target: "Final answer: {{answer | random}}"
+output_type: generate_until
+doc_to_text: !function utils.doc_to_text
+doc_to_target: answer
+generation_kwargs:
+  until:
+    - "\n\n\n\n"
+    - "## World enumeration ##"
+    - "## Story ##"
+filter_list:
+  - name: get_response
+    filter:
+      - function: "lowercase"
+      # Remove formating chars : "-", "*", "$", "{", "}", "[", "]"
+      - function: "replace_regex" 
+        regex_pattern: "[-*${}\\[\\]]"
+        replacement_string: "" 
+      - function: "regex"
+        # regex_pattern:  "(?:final\\s)?answer(?:\\s*is)?:?\\s*(.*)" # This works, but who knows, regex is the reason we invented language models
+        regex_pattern:  "(?:(?<=final answer is: \n\n)|(?<=final answer is: \n)|(?<=final answer is: )|(?<=final answer: \n\n)|(?<=final answer: \n)|(?<=final answer: )|(?<=answer is: \n\n)|(?<=answer is: \n)|(?<=answer is: )|(?<=answer: \n\n)|(?<=answer: \n)|(?<=answer: )|(?<=answer is \n\n)|(?<=answer is \n)|(?<=answer is )|(?<=answer:\n\n)|(?<=answer:\n)|(?<=answer is:\n\n)|(?<=answer is:\n))(.+?)(?=\n|$)"
+      # Filter everything after the first break line, ignoring leading newlines
+      - function: "regex"
+        regex_pattern: "^[\n]*([^\n]*)" # Updated regex
+      # Remove leading white spaces
+      - function: remove_whitespace
+      # function to ignore right white spaces or line breaks
+      - function: "regex"
+        regex_pattern: "^(.*?)\\s*$"
+      - function: "replace_regex" # Use the new filter type      
+        regex_pattern: " and" # The literal string " and" to match
+        replacement_string: "" # Replace with an empty string (this is the default)   
+      - function: take_first
+num_fewshot: 3
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+    ignore_case: true
+    ignore_punctuation: true
+metadata:
+  version: 1.0

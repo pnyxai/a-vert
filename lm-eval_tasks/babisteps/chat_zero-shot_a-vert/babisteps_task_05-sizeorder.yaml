@@ -1,0 +1,4 @@
+dataset_name: sizeorder
+include: _default_template_yaml
+task: babisteps-chat_zero_shot-task_05-sizeorder
+task_alias: task 05 - sizeorder

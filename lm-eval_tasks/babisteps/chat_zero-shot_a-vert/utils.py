@@ -1,3 +1,5 @@
+from functools import partial
+
 import re
 import os
 
@@ -10,28 +12,7 @@ from a_vert import processing as a_vert
 AVERT_METHOD = "rerank"
 DOCUMENT_TEMPLATE = "<Document>: {document}<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
 QUERY_TEMPLATE = """<|im_start|>system\nJudge whether the Document meets the requirements based on the Query and the Instruct provided. Note that the answer can only be "yes" or "no".<|im_end|>\n<|im_start|>user\n <Instruct>: Find the document that better represents the meaning in the query. Check for any doubts about the question or options. Focus on exact numbers, dates, or symbols.\n<Query>: {query}\n"""
-# 
-# Rerankers without instruction : gte-reranker-modernbert-base, jina-reranker-v2-base-multilingual
-# 
-# AVERT_METHOD = "rerank"
-# DOCUMENT_TEMPLATE = None
-# QUERY_TEMPLATE = None
-# 
-# Embedding with instruction : Qwen3-Embedding-0.6B, Qwen3-Embedding-4B, multilingual-e5-large-instruct 
-# 
-# AVERT_METHOD = "embedding"
-# DOCUMENT_TEMPLATE = None
-# QUERY_TEMPLATE = 'Instruct: Find the document that better represents the meaning in the query. Check for any doubts about the question or options. Focus on exact numbers, dates, or symbols.\nQuery:{query}'
-# 
-# Embedding without instruction : gte-modernbert-base
-# 
-# AVERT_METHOD = "embedding"
-# DOCUMENT_TEMPLATE = None
-# QUERY_TEMPLATE = None
-
-
 GROUPING="max"
-
 ENCHANCE = True
 
 
@@ -46,6 +27,37 @@ if AVERT_ENDPOINT_TYPE is None:
 AVERT_MODEL_NAME = os.getenv("AVERT_MODEL_NAME", None)
 if AVERT_MODEL_NAME is None and  (AVERT_ENDPOINT_TYPE == "vllm" or AVERT_ENDPOINT_TYPE=="openai"):
     raise ValueError("AVERT_MODEL_NAME environment variable is not set. This is required for vLLM or OpenAI endpoint to function.")
+
+
+
+
+# ### Base ###
+def base_format(example: dict, include_options: bool) -> str:
+    prompt = ""
+    prompt += "## World enumeration ##\n"
+    world = example["world_enumerate"]
+    prompt += world
+    prompt += "\n\n## Story ##\n"
+    story = example["story"]
+    prompt += story
+    prompt += "\nQuestion: "
+    question = example["question"]
+    prompt += question
+    if include_options:
+        prompt += "Options:\n"
+        options = example["options"]
+        for i, opt in enumerate(options):
+            prompt += "{}\n".format(opt)
+    return prompt
+
+
+def format_example(example, include_options: bool, including_answer: bool):
+    prompt = base_format(example, include_options)
+    return prompt
+
+
+doc_to_text = partial(format_example, include_options=False, including_answer=False)
+
 
 
 
@@ -68,25 +80,33 @@ def filter_response(pred):
 
 
 
-def doc_eval(pred, options, target_idx, question, task):
+def doc_eval(pred, options, answers, question, task):
     """This function takes a model generated response ("pred") and the 
 
     """
+    if isinstance(options[0], list):
+        # This is a listing question, convert lists to strings
+        options = [",".join(a) for a in options]
+        # The answer is a single list
+        if isinstance(answers, list):
+            answers = [",".join(a) for a in answers]       
 
-    refs = options[target_idx]
+    if not isinstance(answers, list):
+        answers = [answers]
 
     # ----------------------- EXACT MATCH --------------------------------------
     # Filter response
     filtered_pred = filter_response(pred)
 
     # Get match
-    exact_match = True
-    if filtered_pred != refs:
-        exact_match = False
+    exact_match = False
+    for answ in answers:
+        if filtered_pred == answ:
+            exact_match = True
 
     # ----------------------- A-VERT -------------------------------------------
     # Get other elements from the bAbI world
-    correct_group_text, wrong_group_text = get_bbh_options(refs, question, options, task)
+    correct_group_text, wrong_group_text = get_babisteps_options(answers, question, options, task)
     # Construct the wrong candidates group
     group_texts_dict = a_vert.construct_candidate_groups(correct_group_text, 
                                wrong_group_text, 
@@ -121,8 +141,6 @@ def doc_eval(pred, options, target_idx, question, task):
         "a-vert_match": a_vert_match,
     }
 
-
-
     return results
 
 def process_results(doc, results):
@@ -134,37 +152,34 @@ def process_results(doc, results):
     assert len(results) == 1, "only single predictions are supported"
 
     # Get the data
+    # print(doc)
     response = results[0]
-    target = doc["target_idx"]
+    answer = doc["answer"]
     options = doc["options"]
-    question = doc["input"]
-    task = doc["task"]
+    question = doc["question"]
+    task = "" #doc["task"]
 
     # Evaluate the document with the given model response
-    results = doc_eval(response, options, target, question, task)
+    results = doc_eval(response, options, answer, question, task)
 
     return results
 
 
 
 # ------------------------------------------------------------------------------
-# --------------------- BBH specific code --------------------------------------
+# --------------------- babisteps specific code --------------------------------
 # ------------------------------------------------------------------------------
 
-def get_bbh_options(refs, question, options, task):
+def get_babisteps_options(answers, question, options, task):
 
-    correct_group_text = [refs]
-    wrong_group_text = [ a for a in options if a != refs]
-
-    if task == "navigate":
-        # "do you return to the starting point?"
-        if refs=="yes":
-            correct_group_text.append("yes, you do return to the starting point")
-            wrong_group_text.append("no, you don't return to the starting point")
-        else:
-            correct_group_text.append("no, you don't return to the starting point")
-            wrong_group_text.append("yes, you do return to the starting point")
-
-        
+    correct_group_text = answers
+    wrong_group_text = list()
+    for option in options:
+        add = True
+        for answ in answers:
+            if answ == option:
+                add = False
+        if add:
+            wrong_group_text.append(option)       
 
     return correct_group_text, wrong_group_text

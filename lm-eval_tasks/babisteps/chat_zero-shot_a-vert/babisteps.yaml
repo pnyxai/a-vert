@@ -1,0 +1,16 @@
+aggregate_metric_list:
+-   aggregation: mean
+    filter_list: get_response
+    metric: exact_match
+    weight_by_size: true
+group: babisteps-chat-zero-shot-all
+task:
+- babisteps-chat_zero_shot-task_01-simpletracking
+- babisteps-chat_zero_shot-task_02-immediateorder
+- babisteps-chat_zero_shot-task_03-complextracking
+- babisteps-chat_zero_shot-task_04-listing
+- babisteps-chat_zero_shot-task_05-sizeorder
+- babisteps-chat_zero_shot-task_06-spatialorder
+- babisteps-chat_zero_shot-task_07-temporalorder
+metadata:
+    version: 1

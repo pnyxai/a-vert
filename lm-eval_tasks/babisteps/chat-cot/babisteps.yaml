@@ -1,0 +1,16 @@
+aggregate_metric_list:
+-   aggregation: mean
+    filter_list: get_response
+    metric: exact_match
+    weight_by_size: true
+group: babisteps-chat-cot-all
+metadata:
+    version: 1
+task:
+- babisteps-chat-cot-task_01-simpletracking
+- babisteps-chat-cot-task_02-immediateorder
+- babisteps-chat-cot-task_03-complextracking
+- babisteps-chat-cot-task_04-listing
+- babisteps-chat-cot-task_05-sizeorder
+- babisteps-chat-cot-task_06-spatialorder
+- babisteps-chat-cot-task_07-temporalorder
