@@ -1,0 +1,5 @@
+dataset_name: geometric_shapes
+tag: bbh_split-all
+include: _default_template_yaml
+task: bbh-split_07-geometric_shapes
+task_alias: "BBH - Geometric Shapes"

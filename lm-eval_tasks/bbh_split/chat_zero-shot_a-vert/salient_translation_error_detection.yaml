@@ -1,0 +1,6 @@
+dataset_name: salient_translation_error_detection
+tag: bbh_split-all
+include: _default_template_yaml
+doc_to_text: "{{input}}\n- {{'\n- '.join(options)}}"
+task: bbh-split_19-salient_translation_error_detection
+task_alias: "BBH - Salient Translation Error Detection"

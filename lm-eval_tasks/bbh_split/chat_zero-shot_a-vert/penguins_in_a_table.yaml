@@ -1,0 +1,5 @@
+dataset_name: penguins_in_a_table
+tag: bbh_split-all
+include: _default_template_yaml
+task: bbh-split_16-penguins_in_a_table
+task_alias: "BBH - Penguins in a Table"

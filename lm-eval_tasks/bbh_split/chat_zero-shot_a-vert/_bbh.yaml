@@ -1,0 +1,17 @@
+group: bbh_split
+task:
+  - group: bbh_split-all
+    task:
+      - bbh_split-all
+    aggregate_metric_list:
+    - aggregation: mean
+      metric: a-vert_match
+      weight_by_size: true
+      filter_list: pass_all
+aggregate_metric_list:
+  - aggregation: mean
+    metric: a-vert_match
+    weight_by_size: true
+    filter_list: pass_all
+metadata:
+  version: 1.0

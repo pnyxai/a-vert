@@ -1,0 +1,6 @@
+dataset_name: logical_deduction_five_objects
+tag: bbh_split-all
+include: _default_template_yaml
+doc_to_text: "{{input}}\n\nSelect the only correct option:\n- {{'\n- '.join(options)}}"
+task: bbh-split_09-logical_deduction_five_objects
+task_alias: "BBH - Logical Deduction Five Objects"

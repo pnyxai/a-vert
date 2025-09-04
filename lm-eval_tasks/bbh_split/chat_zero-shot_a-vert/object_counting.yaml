@@ -1,0 +1,5 @@
+dataset_name: object_counting
+tag: bbh_split-all
+include: _default_template_yaml
+task: bbh-split_15-object_counting
+task_alias: "BBH - Object Causalounting"

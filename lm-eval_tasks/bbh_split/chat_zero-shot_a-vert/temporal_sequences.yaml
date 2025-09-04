@@ -1,0 +1,6 @@
+dataset_name: temporal_sequences
+tag: bbh_split-all
+include: _default_template_yaml
+doc_to_text: "{{input}}\n-{{'\n-'.join(options)}}"
+task: bbh-split_22-temporal_sequences
+task_alias: "BBH - Temporal Sequences"

@@ -1,0 +1,5 @@
+dataset_name: causal_judgement
+tag: bbh_split-all
+include: _default_template_yaml
+task: bbh-split_02-causal_judgement
+task_alias: "BBH - Causal Judgement"

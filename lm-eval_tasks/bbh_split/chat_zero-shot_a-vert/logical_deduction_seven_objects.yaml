@@ -1,0 +1,6 @@
+dataset_name: logical_deduction_seven_objects
+tag: bbh_split-all
+include: _default_template_yaml
+doc_to_text: "{{input}}\n\nSelect the only correct option:\n- {{'\n- '.join(options)}}"
+task: bbh-split_10-logical_deduction_seven_objects
+task_alias: "BBH - Logical Deduction Seven Objects"

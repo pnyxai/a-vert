@@ -1,0 +1,5 @@
+dataset_name: formal_fallacies
+tag: bbh_split-all
+include: _default_template_yaml
+task: bbh-split_06-formal_fallacies
+task_alias: "BBH - Formal Fallacies"

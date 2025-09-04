@@ -1,0 +1,5 @@
+dataset_name: sports_understanding
+tag: bbh_split-all
+include: _default_template_yaml
+task: bbh-split_21-sports_understanding
+task_alias: "BBH - Sports Understanding"

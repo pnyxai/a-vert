@@ -1,0 +1,6 @@
+dataset_name: snarks
+tag: bbh_split-all
+include: _default_template_yaml
+doc_to_text: "{{input}}\n-{{'\n-'.join(options)}}"
+task: bbh-split_20-snarks
+task_alias: "BBH - Snarks"

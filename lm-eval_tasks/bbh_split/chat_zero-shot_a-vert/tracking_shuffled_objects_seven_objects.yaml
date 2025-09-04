@@ -1,0 +1,5 @@
+dataset_name: tracking_shuffled_objects_seven_objects
+tag: bbh_split-all
+include: _default_template_yaml
+task: bbh-split_24-tracking_shuffled_objects_seven_objects
+task_alias: "BBH - Tracking Shuffled Objects Seven Objects"

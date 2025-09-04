@@ -1,0 +1,5 @@
+dataset_name: dyck_languages
+tag: bbh_split-all
+include: _default_template_yaml
+task: bbh-split_05-dyck_languages
+task_alias: "BBH - Dyck Languages"

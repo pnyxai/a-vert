@@ -1,0 +1,6 @@
+dataset_name: ruin_names
+tag: bbh_split-all
+include: _default_template_yaml
+doc_to_text: "{{input}}\n\nSelect only one option:\n- {{'\n- '.join(options)}}"
+task: bbh-split_18-ruin_names
+task_alias: "BBH - Ruin Names"

@@ -1,0 +1,6 @@
+dataset_name: movie_recommendation
+tag: bbh_split-all
+include: _default_template_yaml
+doc_to_text: "{{input}} Choose from:\n- {{'\n- '.join(options)}}"
+task: bbh-split_12-movie_recommendation
+task_alias: "BBH - Movie Recommendation"

@@ -1,0 +1,6 @@
+dataset_name: word_sorting
+tag: bbh_split-all
+include: _default_template_yaml
+doc_to_text: "{{input}}"
+task: bbh-split_27-word_sorting
+task_alias: "BBH - Word Sorting"
