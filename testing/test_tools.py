@@ -35,7 +35,7 @@ def process_lmeh_sample_question(question_json,
     if test_type == "mmlu":
         extract_data = mmlu.extract_data
     elif test_type == "babisteps":
-        extract_data = babisteps.extract_data
+        extract_data = babisteps.extract_data_contextualized
     elif test_type == "babi":
         extract_data = babi.extract_data
     else:

@@ -84,15 +84,6 @@ def doc_eval(pred, options, answers, question, task):
     """This function takes a model generated response ("pred") and the 
 
     """
-    if isinstance(options[0], list):
-        # This is a listing question, convert lists to strings
-        options = [",".join(a) for a in options]
-        # The answer is a single list
-        if isinstance(answers, list):
-            answers = [",".join(a) for a in answers]       
-
-    if not isinstance(answers, list):
-        answers = [answers]
 
     # ----------------------- EXACT MATCH --------------------------------------
     # Filter response
@@ -154,8 +145,8 @@ def process_results(doc, results):
     # Get the data
     # print(doc)
     response = results[0]
-    answer = doc["answer"]
-    options = doc["options"]
+    answer = doc["contextualized_answer"]
+    options = doc["contextualized_options"]
     question = doc["question"]
     task = "" #doc["task"]
 
