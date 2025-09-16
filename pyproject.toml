@@ -6,7 +6,7 @@ authors = [
     {name = "Ramiro Rodriguez Colmeiro",email = "rawthil@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "numpy (>=2.3.2,<3.0.0)",
     "requests (>=2.32.4,<3.0.0)",
@@ -17,3 +17,15 @@ dependencies = [
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.30.1"
+tqdm = "^4.67.1"
+pandas = "^2.3.2"
+seaborn = "^0.13.2"
+scikit-learn = "1.7.2"
+
+
+[tool.poetry.group.tqdm.dependencies]
+ipykernel = "^6.30.1"
+
