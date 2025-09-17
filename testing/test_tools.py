@@ -5,6 +5,8 @@ from copy import deepcopy
 from testing import babi
 from testing import mmlu
 from testing import babisteps
+from testing import gsm8k
+
 
 from a_vert import processing as a_vert
 
@@ -38,6 +40,8 @@ def process_lmeh_sample_question(question_json,
         extract_data = babisteps.extract_data_contextualized
     elif test_type == "babi":
         extract_data = babi.extract_data
+    elif test_type == "gsm8k":
+        extract_data = gsm8k.extract_data
     else:
         raise ValueError("Dataset type not supported.")
     
