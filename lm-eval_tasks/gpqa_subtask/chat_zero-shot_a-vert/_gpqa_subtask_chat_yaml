@@ -1,0 +1,23 @@
+dataset_path: PNYX/gpqa_subtask
+tag: gpqa_subtask
+output_type: generate_until
+process_docs: !function utils.process_docs
+training_split: train
+validation_split: train
+test_split: null
+description: ""
+doc_to_text: "{{Question}}\nChoices:\n(A) {{choice1}}\n(B) {{choice2}}\n(C) {{choice3}}\n(D) {{choice4}}"
+doc_to_target: answer
+process_results: !function utils.process_results
+filter_list:
+  - name: pass_all
+    filter:
+      - function: take_first
+generation_kwargs:
+  max_gen_toks: 7000
+  until:
+    - "</s>"
+    - "<|im_end|>"
+  temperature: 0.0
+metadata:
+  version: 1.0

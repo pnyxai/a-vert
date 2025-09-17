@@ -1,5 +1,6 @@
+import random
 import re
-import numpy as np
+import datasets
 import os
 
 from a_vert import processing as a_vert
@@ -35,8 +36,6 @@ GROUPING="max"
 
 ENCHANCE = True
 
-
-
 # This environment variable contains the endpoint to the selected model
 AVERT_MODEL_ENDPOINT = os.getenv("AVERT_MODEL_ENDPOINT", None)
 if AVERT_MODEL_ENDPOINT is None:
@@ -68,7 +67,7 @@ def filter_response(pred):
 
 
 
-def doc_eval(pred, refs, question):
+def doc_eval(pred, refs, question, choices):
     """This function takes a model generated response ("pred") and the target
     reference ("refs") and computes the following metrics:
     - `exact_match` : A hard match between the generated string and the target
@@ -88,13 +87,18 @@ def doc_eval(pred, refs, question):
         exact_match = False
 
     # ----------------------- A-VERT -------------------------------------------
-    # Generate other numbers
-    correct_group_text, wrong_group_text = get_gsm8k_options(refs, question)
+    # Generate options groups
+    correct_group_text, wrong_group_text, correct_group_idxs, wrong_group_idxs  = get_gpqa_options(refs, question, choices)
+
     # Construct the wrong candidates group
     group_texts_dict = a_vert.construct_candidate_groups(correct_group_text, 
                                wrong_group_text, 
                                ["correct", "wrong"], 
                                enhance=ENCHANCE,
+                               with_options=ENCHANCE,
+                               option_symbol="letters",
+                               correct_group_idxs=correct_group_idxs,
+                               wrong_group_idxs=wrong_group_idxs
                                )
 
     # Process all candidate groups
@@ -130,41 +134,88 @@ def process_results(doc, results):
     """Custom processing function used to implement "a-vert" metric.
     """
 
-    # Assert we are evaluating a single target. This is a limitation of this 
-    # implementation
-    assert len(results) == 1, "only single predictions are supported"
-
-    
+   
     # Get the data
+
     response = results[0]
-    target = doc["answer"]
-    question = doc["question"]
+    target = preprocess(doc["Correct Answer"])
+    question = doc["Question"]
+    choices = doc["choices"]
+
 
     # Evaluate the document with the given model response
-    results = doc_eval(response, target, question)
+    results = doc_eval(response, target, question, choices)
 
     return results
 
 
+
 # ------------------------------------------------------------------------------
-# --------------------- gsm8k specific code ------------------------------------
+# --------------------- GPQA specific code -------------------------------------
 # ------------------------------------------------------------------------------
 
-def get_gsm8k_options(question_target, question):
 
-    # Get target number
-    target_num = int(question_target.split("#### ")[-1])
-    # Set other numbers
-    other_options = [
-        np.floor(target_num*0.1),
-        np.floor(target_num*0.5),
-        np.ceil(target_num*1.25),
-        np.ceil(target_num*1.8),
-    ]
-    other_options = np.unique(other_options)
-    other_options = [int(a) for a in other_options if a != target_num]
+def get_gpqa_options(question_target, question, choices):
 
-    wrong_group_text = [f"{a}" for a in other_options]
-    correct_group_text = [f"{target_num}"]
 
-    return correct_group_text, wrong_group_text
+    correct_group_text = list()
+    wrong_group_text = list()
+    correct_group_idxs = list()
+    wrong_group_idxs = list()
+    for idx in range(len(choices)):
+        if choices[idx] == question_target:
+            correct_group_text.append(choices[idx])
+            correct_group_idxs.append(idx)
+        else:
+            wrong_group_text.append(choices[idx])
+            wrong_group_idxs.append(idx)
+    
+    assert len(correct_group_idxs) == 1
+    assert len(correct_group_text) == len(correct_group_idxs)
+    assert len(wrong_group_idxs) == len(wrong_group_text)
+
+    return correct_group_text, wrong_group_text, correct_group_idxs, wrong_group_idxs 
+
+
+
+
+def preprocess(text):
+    if text is None:
+        return " "
+    text = text.strip()
+    text = text.replace(" [title]", ". ")
+    text = re.sub("\\[.*?\\]", "", text)
+    text = text.replace("  ", " ")
+    return text
+
+
+def process_docs(dataset: datasets.Dataset) -> datasets.Dataset:
+    def _process_doc(doc):
+        choices = [
+            preprocess(doc["Incorrect Answer 1"]),
+            preprocess(doc["Incorrect Answer 2"]),
+            preprocess(doc["Incorrect Answer 3"]),
+            preprocess(doc["Correct Answer"]),
+        ]
+
+        random.shuffle(choices)
+        correct_answer_index = choices.index(preprocess(doc["Correct Answer"]))
+
+        out_doc = {
+            "choice1": choices[0],
+            "choice2": choices[1],
+            "choice3": choices[2],
+            "choice4": choices[3],
+            "choices": [choices[0], choices[1], choices[2], choices[3]],
+            "answer": f"({chr(65 + correct_answer_index)})",
+        }
+        return out_doc
+
+    return dataset.map(_process_doc)
+
+
+
+
+
+
+

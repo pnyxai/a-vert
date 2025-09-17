@@ -1,0 +1,4 @@
+dataset_name: diamond_chemistry
+include: _gpqa_subtask_chat_yaml
+task: gpqa_subtask_diamond_chemistry
+tag: gpqa_subtask_diamond
