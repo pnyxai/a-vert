@@ -164,13 +164,22 @@ def get_gpqa_options(question_target, question, choices):
     wrong_group_idxs = list()
     for idx in range(len(choices)):
         if choices[idx] == question_target:
-            correct_group_text.append(choices[idx])
-            correct_group_idxs.append(idx)
+            if len(correct_group_idxs) == 0:
+                correct_group_text.append(choices[idx])
+                correct_group_idxs.append(idx)
+            else:
+                print(f"WARNING: Duplicated target found.\n\t{choices[idx]}\n\t{question_target}")
         else:
             wrong_group_text.append(choices[idx])
             wrong_group_idxs.append(idx)
+            
+    if len(wrong_group_text) == 0:
+        print(f"wrong group text is empty! patching with refusals and continuing...\n\t{question_target}\n\t{choices}")
+        wrong_group_text = a_vert.refusal_candidate_group_construction()
+        for idx in range(len(wrong_group_text)):
+            wrong_group_idxs.append(idx+1)
     
-    assert len(correct_group_idxs) == 1
+    
     assert len(correct_group_text) == len(correct_group_idxs)
     assert len(wrong_group_idxs) == len(wrong_group_text)
 

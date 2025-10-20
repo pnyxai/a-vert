@@ -156,6 +156,12 @@ def get_bbh_options(refs, question, options, task):
     correct_group_text = [refs]
     wrong_group_text = [ a for a in options if a != refs]
 
+    if len(wrong_group_text) == 0:
+        print(f"wrong group text is empty! patching with refusals and continuing...\n\t{refs}\n\t{options}")
+        wrong_group_text = a_vert.refusal_candidate_group_construction()
+              
+        
+
     if task == "navigate":
         # "do you return to the starting point?"
         if refs=="yes":

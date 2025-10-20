@@ -8,7 +8,7 @@ doc_to_text: !function utils.doc_to_text
 doc_to_target: answer
 process_results: !function utils.process_results
 generation_kwargs:
-  max_gen_toks: 7000
+  max_gen_toks: 3096
   until:
     - "\n\n\n\n"
     - "## World enumeration ##"
