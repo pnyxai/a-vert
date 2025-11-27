@@ -1,51 +1,19 @@
 import re
-import os
 
-from a_vert import processing as a_vert
+import a_vert
 
-# ---- Different a-vert configs
-# 
-# Qwen3-Reranker Family : Qwen3-Reranker-0.6B-seq-cls, Qwen3-Reranker-4B-seq-cls
-#     
-AVERT_METHOD = "rerank"
-DOCUMENT_TEMPLATE = "<Document>: {document}<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
-QUERY_TEMPLATE = """<|im_start|>system\nJudge whether the Document meets the requirements based on the Query and the Instruct provided. Note that the answer can only be "yes" or "no".<|im_end|>\n<|im_start|>user\n <Instruct>: Find the document that better represents the meaning in the query. Check for any doubts about the question or options. Focus on exact numbers, dates, or symbols.\n<Query>: {query}\n"""
-# 
-# Rerankers without instruction : gte-reranker-modernbert-base, jina-reranker-v2-base-multilingual
-# 
-# AVERT_METHOD = "rerank"
-# DOCUMENT_TEMPLATE = None
-# QUERY_TEMPLATE = None
-# 
-# Embedding with instruction : Qwen3-Embedding-0.6B, Qwen3-Embedding-4B, multilingual-e5-large-instruct 
-# 
-# AVERT_METHOD = "embedding"
-# DOCUMENT_TEMPLATE = None
-# QUERY_TEMPLATE = 'Instruct: Find the document that better represents the meaning in the query. Check for any doubts about the question or options. Focus on exact numbers, dates, or symbols.\nQuery:{query}'
-# 
-# Embedding without instruction : gte-modernbert-base
-# 
-# AVERT_METHOD = "embedding"
-# DOCUMENT_TEMPLATE = None
-# QUERY_TEMPLATE = None
+# Setup A-VERT configuration from environment variables
+AVERT_SETUP = a_vert.setup()
+# Extract configuration values
+AVERT_METHOD = AVERT_SETUP["AVERT_METHOD"]
+DOCUMENT_TEMPLATE = AVERT_SETUP["DOCUMENT_TEMPLATE"]
+QUERY_TEMPLATE = AVERT_SETUP["QUERY_TEMPLATE"]
+GROUPING = AVERT_SETUP["GROUPING"]
+ENHANCE = AVERT_SETUP["ENHANCE"]
 
-
-GROUPING="max"
-
-ENCHANCE = True
-
-
-
-# This environment variable contains the endpoint to the selected model
-AVERT_MODEL_ENDPOINT = os.getenv("AVERT_MODEL_ENDPOINT", None)
-if AVERT_MODEL_ENDPOINT is None:
-    raise ValueError("AVERT_MODEL_ENDPOINT environment variable is not set. This is required for A-VERT to function.")
-AVERT_ENDPOINT_TYPE = os.getenv("AVERT_ENDPOINT_TYPE", None)
-if AVERT_ENDPOINT_TYPE is None:
-    raise ValueError("AVERT_ENDPOINT_TYPE environment variable is not set. This is required for A-VERT to function.")
-AVERT_MODEL_NAME = os.getenv("AVERT_MODEL_NAME", None)
-if AVERT_MODEL_NAME is None and  (AVERT_ENDPOINT_TYPE == "vllm" or AVERT_ENDPOINT_TYPE=="openai"):
-    raise ValueError("AVERT_MODEL_NAME environment variable is not set. This is required for vLLM or OpenAI endpoint to function.")
+AVERT_MODEL_ENDPOINT = AVERT_SETUP["AVERT_MODEL_ENDPOINT"]
+AVERT_ENDPOINT_TYPE = AVERT_SETUP["AVERT_ENDPOINT_TYPE"]
+AVERT_MODEL_NAME = AVERT_SETUP["AVERT_MODEL_NAME"]
 
 
 
@@ -88,14 +56,14 @@ def doc_eval(pred, options, target_idx, question, task):
     # Get other elements from the bAbI world
     correct_group_text, wrong_group_text = get_bbh_options(refs, question, options, task)
     # Construct the wrong candidates group
-    group_texts_dict = a_vert.construct_candidate_groups(correct_group_text, 
+    group_texts_dict = a_vert.processing.construct_candidate_groups(correct_group_text, 
                                wrong_group_text, 
                                ["correct", "wrong"], 
-                               enhance=ENCHANCE,
+                               enhance=ENHANCE,
                                )
 
     # Process all candidate groups
-    response_group_distribution, _ = a_vert.get_candidate_groups_embedings_ranking(pred,
+    response_group_distribution, _ = a_vert.processing.get_candidate_groups_embedings_ranking(pred,
                                            group_texts_dict,
                                            AVERT_MODEL_ENDPOINT,
                                            AVERT_ENDPOINT_TYPE,
@@ -158,7 +126,7 @@ def get_bbh_options(refs, question, options, task):
 
     if len(wrong_group_text) == 0:
         print(f"wrong group text is empty! patching with refusals and continuing...\n\t{refs}\n\t{options}")
-        wrong_group_text = a_vert.refusal_candidate_group_construction()
+        wrong_group_text = a_vert.processing.refusal_candidate_group_construction()
               
         
 

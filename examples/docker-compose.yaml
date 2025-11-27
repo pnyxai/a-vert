@@ -1,0 +1,99 @@
+services:
+  vllm-openai-avert:
+    container_name: vllm-openai-avert
+    image: vllm/vllm-openai:v0.11.2
+    volumes:
+      - ${MODELS_PATH}:/root/.cache/huggingface/hub/
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+      - NUM_GPUS=${NUM_GPUS}
+      - MODEL_NAME=${AVERT_MODEL_NAME}
+      - GPU_MEMORY_UTILIZATION=${AVERT_GPU_MEMORY_UTILIZATION}
+      - MAX_MODEL_LEN=${AVERT_MAX_MODEL_LEN}
+      - MAX_NUM_SEQS=${AVERT_MAX_NUM_SEQS}
+      - SERVED_MODEL_NAME=${AVERT_SERVED_MODEL_NAME}
+      - TASK=${TASK}
+      - HF_HUB_OFFLINE=${HF_HUB_OFFLINE}
+      - VLLM_LOGGING_LEVEL=${VLLM_LOGGING_LEVEL}
+    command: [
+      "${AVERT_MODEL_NAME}",
+      "--task",
+      "${TASK}",
+      "--served-model-name",
+      "${AVERT_SERVED_MODEL_NAME}",
+      "--tensor-parallel-size",
+      "${NUM_GPUS}",
+      "--gpu-memory-utilization",
+      "${AVERT_GPU_MEMORY_UTILIZATION}",
+      "--max-model-len",
+      "${AVERT_MAX_MODEL_LEN}",
+      "--trust-remote-code",
+      "--max-num-seqs",
+      "${AVERT_MAX_NUM_SEQS}",
+      "--max-num-batched-tokens",
+      "${AVERT_MAX_MODEL_LEN}",
+      "--enable-log-requests",
+      "--enable-log-outputs",
+      ]
+    ports:
+     - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['${AVERT_GPU_IDS}']
+              capabilities: [gpu]
+
+  vllm-openai-llm:
+    container_name: vllm-openai-llm
+    image: vllm/vllm-openai:v0.11.2
+    depends_on:
+      vllm-openai-avert:
+        condition: service_healthy
+    volumes:
+      - ${MODELS_PATH}:/root/.cache/huggingface/hub/
+    ports:
+     - "8001:8000"
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+      - NUM_GPUS=${NUM_GPUS}
+      - LLM_MODEL_NAME=${LLM_MODEL_NAME}
+      - LLM_GPU_MEMORY_UTILIZATION=${LLM_GPU_MEMORY_UTILIZATION}
+      - LLM_MAX_MODEL_LEN=${LLM_MAX_MODEL_LEN}
+      - LLM_MAX_NUM_SEQS=${LLM_MAX_NUM_SEQS}
+      - LLM_SERVED_MODEL_NAME=${LLM_SERVED_MODEL_NAME}
+      - HF_HUB_OFFLINE=${HF_HUB_OFFLINE}
+    command: [
+      "${LLM_MODEL_NAME}",
+      "--reasoning-parser",
+      "qwen3",
+      "--tensor-parallel-size",
+      "${NUM_GPUS}",
+      "--gpu-memory-utilization",
+      "${LLM_GPU_MEMORY_UTILIZATION}",
+      "--max-model-len",
+      "${LLM_MAX_MODEL_LEN}",
+      "--served-model-name",
+      "${LLM_SERVED_MODEL_NAME}",
+      "--max-num-seqs",
+      "${LLM_MAX_NUM_SEQS}",
+      ]
+    shm_size: '4gb' # This is only used for GPU parallelism
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['${LLM_GPU_IDS}']
+              capabilities: [gpu]
+
+networks:
+  default:
+    driver: bridge              
