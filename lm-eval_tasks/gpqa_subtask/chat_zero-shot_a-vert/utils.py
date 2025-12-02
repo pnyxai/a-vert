@@ -3,20 +3,22 @@ import re
 import datasets
 
 import a_vert
+from a_vert.logger import get_logger
+
+logger = get_logger(__name__)
 
 # Setup A-VERT configuration from environment variables
-AVERT_SETUP = a_vert.setup()
+AVERT_CONFIG = a_vert.setup()
 
-# Extract configuration values
-AVERT_METHOD = AVERT_SETUP["AVERT_METHOD"]
-DOCUMENT_TEMPLATE = AVERT_SETUP["DOCUMENT_TEMPLATE"]
-QUERY_TEMPLATE = AVERT_SETUP["QUERY_TEMPLATE"]
-GROUPING = AVERT_SETUP["GROUPING"]
-ENHANCE = AVERT_SETUP["ENHANCE"]
+# For backward compatibility, extract individual values
+ENHANCE = AVERT_CONFIG.enhance
 
-AVERT_MODEL_ENDPOINT = AVERT_SETUP["AVERT_MODEL_ENDPOINT"]
-AVERT_ENDPOINT_TYPE = AVERT_SETUP["AVERT_ENDPOINT_TYPE"]
-AVERT_MODEL_NAME = AVERT_SETUP["AVERT_MODEL_NAME"]
+# Default instruction map
+default_instruction = {
+    "default": "Find the document that better represents the meaning in the query. Check for any doubts about the question or options. Focus on exact numbers, dates, or symbols.",
+}
+if not AVERT_CONFIG.instruction_map:
+    AVERT_CONFIG.instruction_map = default_instruction
 
 
 def filter_response(pred):
@@ -31,14 +33,14 @@ def filter_response(pred):
         filtered_pred = filtered_pred.lstrip()
         # function to ignore right white spaces or line breaks
         filtered_pred = re.findall(r"^(.*?)\s*$", filtered_pred)[0].strip()
-    except:
+    except Exception:
         filtered_pred = "[invalid]"
 
     return filtered_pred
 
 
 
-def doc_eval(pred, refs, question, choices):
+def doc_eval(pred, refs, question, choices, task):
     """This function takes a model generated response ("pred") and the target
     reference ("refs") and computes the following metrics:
     - `exact_match` : A hard match between the generated string and the target
@@ -73,17 +75,12 @@ def doc_eval(pred, refs, question, choices):
                                )
 
     # Process all candidate groups
-    response_group_distribution, _ = a_vert.processing.get_candidate_groups_embedings_ranking(pred,
-                                           group_texts_dict,
-                                           AVERT_MODEL_ENDPOINT,
-                                           AVERT_ENDPOINT_TYPE,
-                                            AVERT_METHOD,
-                                           model_name=AVERT_MODEL_NAME,
-                                           query_template=QUERY_TEMPLATE,
-                                           document_template=DOCUMENT_TEMPLATE,
-                                           grouping_method=GROUPING, 
-                                           verbose=False,
-                                           )
+    response_group_distribution, _ = a_vert.processing.get_candidate_groups_embedings_ranking(
+        pred,
+        group_texts_dict,
+        AVERT_CONFIG,
+        task=task if task else "default",
+    )
     # Check if this is a match
     a_vert_match = True
     if response_group_distribution["correct"] < response_group_distribution["wrong"]:
@@ -112,12 +109,13 @@ def process_results(doc, results):
     target = preprocess(doc["Correct Answer"])
     question = doc["Question"]
     choices = doc["choices"]
+    task = doc.get("task", "default")
 
 
     # Evaluate the document with the given model response
-    results = doc_eval(response, target, question, choices)
+    result_dict = doc_eval(response, target, question, choices, task=task)
 
-    return results
+    return result_dict
 
 
 
@@ -139,13 +137,21 @@ def get_gpqa_options(question_target, question, choices):
                 correct_group_text.append(choices[idx])
                 correct_group_idxs.append(idx)
             else:
-                print(f"WARNING: Duplicated target found.\n\t{choices[idx]}\n\t{question_target}")
+                logger.warning(
+                    "Duplicated target found",
+                    choice=choices[idx],
+                    target=question_target,
+                )
         else:
             wrong_group_text.append(choices[idx])
             wrong_group_idxs.append(idx)
             
     if len(wrong_group_text) == 0:
-        print(f"wrong group text is empty! patching with refusals and continuing...\n\t{question_target}\n\t{choices}")
+        logger.warning(
+            "Wrong group text is empty! Patching with refusals and continuing",
+            target=question_target,
+            choices=choices,
+        )
         wrong_group_text = a_vert.processing.refusal_candidate_group_construction()
         for idx in range(len(wrong_group_text)):
             wrong_group_idxs.append(idx+1)
@@ -192,10 +198,3 @@ def process_docs(dataset: datasets.Dataset) -> datasets.Dataset:
         return out_doc
 
     return dataset.map(_process_doc)
-
-
-
-
-
-
-

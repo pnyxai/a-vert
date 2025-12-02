@@ -54,23 +54,43 @@ Set `AVERT_PROMPT_TEMPLATE` to one of the following predefined templates:
 
 **Option 2: Provide custom templates**
 
-If you need custom templates, you can define:
+If you need custom templates, you must define **both**:
 
 - `AVERT_DOCUMENT_TEMPLATE` : Custom document template string (use `{document}` as placeholder)
 - `AVERT_QUERY_TEMPLATE` : Custom query template string (use `{query}` as placeholder)
-- `AVERT_INSTRUCTION_PROMPT`: Optional instruction text to be inserted into a template.
 
-If you use `AVERT_INSTRUCTION_PROMPT`, you must include the `{instruction}` placeholder in either your document or query template (but not both).
+**Important:** When using custom templates, both `AVERT_DOCUMENT_TEMPLATE` and `AVERT_QUERY_TEMPLATE` must be set. Setting only one will raise an error.
 
-**Note:** You must either set `AVERT_PROMPT_TEMPLATE` OR provide custom templates via `AVERT_DOCUMENT_TEMPLATE` and `AVERT_QUERY_TEMPLATE`. If neither is set, an error will be raised.
+**Dynamic Instruction Injection:**
 
-**Method Configuration (Required):**
+A-VERT supports dynamic, task-aware instruction injection at runtime:
 
-Regardless of which template option you choose, you **must** specify:
+- `AVERT_INSTRUCTION_CONFIG_PATH` : Path to a JSON file mapping task names to instruction strings (optional)
+- `AVERT_INSTRUCTION_PROMPT` : Default instruction text when no task-specific instruction is found (optional, **overrides** JSON `"default"` key)
 
-- `AVERT_METHOD` : Either `rerank` or `embedding` (**required**, no default value)
+To use instruction injection:
 
-This allows you to use the same template with different methods depending on your model capabilities.
+1. Include the `{instruction}` placeholder in **either** your document template **or** query template (but not both).
+2. Provide instructions via:
+   - A JSON file (pointed to by `AVERT_INSTRUCTION_CONFIG_PATH`) containing task-specific instructions and optionally a `"default"` key
+   - And/or a default instruction via `AVERT_INSTRUCTION_PROMPT` (takes precedence over JSON `"default"`)
+
+**Instruction Precedence:**
+1. **Environment variable override**: If `AVERT_INSTRUCTION_PROMPT` is set, it replaces the `"default"` key from the JSON file
+2. **JSON default**: If no env var is set, the `"default"` key from the JSON file is used
+3. **Task-specific**: At runtime, task-specific instructions from the JSON always override the default
+
+**Validation:**
+- At **setup time**, A-VERT validates that:
+  - The `{instruction}` placeholder appears in at most one template
+  - If any template contains `{instruction}`, a non-empty default instruction exists (from either `AVERT_INSTRUCTION_PROMPT` or JSON `"default"`)
+- At **runtime**, for each example:
+  - If a task-specific instruction exists in the JSON map, it is used
+  - Otherwise, the default instruction is used
+  - The instruction is injected into the template containing the placeholder
+
+
+> You must either set `AVERT_PROMPT_TEMPLATE`, or provide custom templates via `AVERT_DOCUMENT_TEMPLATE` and `AVERT_QUERY_TEMPLATE`. If neither is set, an error will be raised.
 
 #### Additional Configuration
 
@@ -83,6 +103,11 @@ This allows you to use the same template with different methods depending on you
 **Enhancement:**
 - `AVERT_ENHANCE` : Whether to enhance candidate groups - `true` or `false` (optional, defaults to `true`)
   - Example: `export AVERT_ENHANCE="true"`
+
+**Logging:**
+- `AVERT_LOG_LEVEL` : Control logging verbosity (optional, defaults to `WARNING`)
+  - Available levels: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`
+  - Example: `export AVERT_LOG_LEVEL="DEBUG"`
 
 #### Example Configuration
 
@@ -100,8 +125,10 @@ export AVERT_PROMPT_TEMPLATE="qwen3-reranker"
 # export AVERT_DOCUMENT_TEMPLATE="<Document>: {document}"
 # export AVERT_QUERY_TEMPLATE="<Query>: {query}"
 
-# even you can define an {instruction} placeholder that will be replaced with the content of:
-# export AVERT_INSTRUCTION_PROMPT="<Your instruction here>"
+# Optional: Task-aware instruction injection
+# export AVERT_INSTRUCTION_CONFIG_PATH="./examples/instructions.example.json"
+# export AVERT_INSTRUCTION_PROMPT="Determine whether the document is relevant to the query."
+# Note: If using {instruction} placeholder in templates, you must provide at least a default instruction
 
 # Additional (optional)
 export AVERT_GROUPING="max"

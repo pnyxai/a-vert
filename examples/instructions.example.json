@@ -1,0 +1,4 @@
+{
+    "default": "Find the document that better represents the meaning in the query. Check for any doubts about the question or options. Focus on exact numbers, dates, or symbols.",
+    "custom_task": "REPLACE WITH YOUR CUSTOM INSTRUCTION FOR THIS TASK"
+}

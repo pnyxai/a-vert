@@ -2,38 +2,93 @@ import numpy as np
 from copy import deepcopy
 from scipy import spatial
 
-
 from a_vert import embedding_tools as emb
 from a_vert import prompts_general as prompts
 from a_vert import grouping as grouping_module
+from a_vert.config import AvertConfig
+from a_vert.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def get_candidate_groups_embedings_ranking(
     model_response,
     candidate_groups_dict,
-    endpoint,
-    endpoint_type,
-    method,
-    model_name=None,
-    query_template=None,
-    document_template=None,
+    config: AvertConfig,
     distance_fn=spatial.distance.cosine,
-    grouping_method="max",
     batch_size=32,
-    verbose=False,
+    task: str = "default",
 ):
     """This function takes a dictionary of candidate groups. Each element of the
     dictionary is list of text entries to be evaluated.
     Then takes the language model response (`model_response`) and compares the
     embedding of this response to each candidate group and produces a
-    classification of the model response into one of these four candidate groups
-    by means of the embeddings and a distance metrics plus an aggregation
+    classification of the model response into one of these candidate groups
+    by means of the embeddings and a distance metric plus an aggregation
     method.
-    The result of this function is a vector (`response_group_distribution`) that
-    adds up to one, where the highest value represent the highest affinity of
-    the model response to the given group, in the same order as the groups are
-    provided to this function.
+    The result of this function is a distribution over the groups that
+    adds up to one.
+
     """
+
+    # Extract configuration values from AvertConfig
+    endpoint = config.avert_model_endpoint
+    endpoint_type = config.avert_endpoint_type
+    method = config.avert_method
+    model_name = config.avert_model_name
+    query_template = config.query_template
+    document_template = config.document_template
+    grouping_method = config.grouping
+    instruction_map = config.instruction_map
+    instruction_flag = config.instruction_flag
+
+    # Resolve templates strictly from call-level arguments (no global config access)
+    base_doc_template = document_template
+    base_query_template = query_template
+
+    # Instruction resolution (instruction_map provided externally)
+    if instruction_map == {} and instruction_flag:
+        raise ValueError(
+            "The template contains an '{instruction}' placeholder but "
+            "the AvertConfig.instruction_map is empty."
+        )
+    instruction = instruction_map.get(task) or instruction_map.get("default")
+
+    placeholder = "{instruction}"
+    doc_has_placeholder = bool(base_doc_template and placeholder in base_doc_template)
+    query_has_placeholder = bool(
+        base_query_template and placeholder in base_query_template
+    )
+
+    # At setup time we enforce that a default instruction exists when templates contain
+    # the placeholder, so at runtime we just inject when available; otherwise proceed.
+
+    # Inject instruction into LOCAL copies only (do not mutate config)
+    final_doc_template = base_doc_template
+    final_query_template = base_query_template
+    if instruction is not None:
+        if doc_has_placeholder:
+            final_doc_template = base_doc_template.replace(placeholder, instruction)
+        if query_has_placeholder:
+            final_query_template = base_query_template.replace(placeholder, instruction)
+
+        logger.debug(
+            "Instruction injected",
+            task=task,
+            base_doc_template=base_doc_template,
+            base_query_template=base_query_template,
+            final_doc_template=final_doc_template,
+            final_query_template=final_query_template,
+        )
+    else:
+        logger.debug(
+            "No instruction resolved; proceeding without injection",
+            task=task,
+            base_doc_template=base_doc_template,
+            base_query_template=base_query_template,
+            final_doc_template=final_doc_template,
+            final_query_template=final_query_template,
+        )
 
     # Create batch for the embedding endpoint
     batch = list()
@@ -59,8 +114,8 @@ def get_candidate_groups_embedings_ranking(
             endpoint,
             endpoint_type,
             model_name=model_name,
-            query_template=query_template,
-            document_template=document_template,
+            query_template=final_query_template,
+            document_template=final_doc_template,
             distance_fn=distance_fn,
             batch_size=batch_size,
         )
@@ -71,8 +126,8 @@ def get_candidate_groups_embedings_ranking(
             endpoint,
             endpoint_type,
             model_name=model_name,
-            query_template=query_template,
-            document_template=document_template,
+            query_template=final_query_template,
+            document_template=final_doc_template,
         )
     else:
         raise ValueError("Embedding distance calculation method not supported.")
@@ -91,12 +146,21 @@ def get_candidate_groups_embedings_ranking(
         # Track total score for normalization
         norm_sum += group_distances_dict[group_name]
 
-        if verbose:
-            print(f"Group: {group_name}")
-            for idx in np.argsort(this_group_distances)[::-1]:
-                print(
-                    f"{this_group_distances[idx]}\t{candidate_groups_dict[group_name][idx]}"
-                )
+        # Aggregate candidate ranking for a single compact log entry
+        sort_indices = np.argsort(this_group_distances)[::-1]
+        result = [
+            (
+                candidate_groups_dict[group_name][idx],
+                float(this_group_distances[idx]),
+            )
+            for idx in sort_indices
+        ]
+        logger.debug(
+            "Candidate ranking",
+            group=group_name,
+            model_response=model_response,
+            result=result,
+        )
 
     # Normalize scores
     for group_name in candidate_groups_dict.keys():

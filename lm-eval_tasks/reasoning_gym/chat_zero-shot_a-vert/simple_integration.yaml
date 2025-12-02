@@ -1,0 +1,4 @@
+dataset_name: simple_integration
+include: _default_template_yaml
+task: reasoning_gym_004-simple_integration
+task_alias: "Reasoning gym - Simple Integration"

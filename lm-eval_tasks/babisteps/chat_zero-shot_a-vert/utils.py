@@ -1,24 +1,22 @@
 from functools import partial
 
+from pydoc import doc
 import re
 
 import a_vert
 
 # Setup A-VERT configuration from environment variables
-AVERT_SETUP = a_vert.setup()
+AVERT_CONFIG = a_vert.setup()
 
-# Extract configuration values
-AVERT_METHOD = AVERT_SETUP["AVERT_METHOD"]
-DOCUMENT_TEMPLATE = AVERT_SETUP["DOCUMENT_TEMPLATE"]
-QUERY_TEMPLATE = AVERT_SETUP["QUERY_TEMPLATE"]
-GROUPING = AVERT_SETUP["GROUPING"]
-ENHANCE = AVERT_SETUP["ENHANCE"]
+# For backward compatibility, extract individual values
+ENHANCE = AVERT_CONFIG.enhance
 
-AVERT_MODEL_ENDPOINT = AVERT_SETUP["AVERT_MODEL_ENDPOINT"]
-AVERT_ENDPOINT_TYPE = AVERT_SETUP["AVERT_ENDPOINT_TYPE"]
-AVERT_MODEL_NAME = AVERT_SETUP["AVERT_MODEL_NAME"]
-
-
+# Default instruction map
+default_instruction = {
+    "default": "Find the document that better represents the meaning in the query. Check for any doubts about the question or options. Focus on exact numbers, dates, or symbols.",
+}
+if not AVERT_CONFIG.instruction_map:
+    AVERT_CONFIG.instruction_map = default_instruction
 
 
 # ### Base ###
@@ -63,7 +61,7 @@ def filter_response(pred):
         filtered_pred = filtered_pred.lstrip()
         # function to ignore right white spaces or line breaks
         filtered_pred = re.findall(r"^(.*?)\s*$", filtered_pred)[0].strip()
-    except:
+    except Exception:
         filtered_pred = "[invalid]"
 
     return filtered_pred
@@ -96,17 +94,12 @@ def doc_eval(pred, options, answers, question, task):
                                )
 
     # Process all candidate groups
-    response_group_distribution, _ = a_vert.processing.get_candidate_groups_embedings_ranking(pred,
-                                           group_texts_dict,
-                                           AVERT_MODEL_ENDPOINT,
-                                           AVERT_ENDPOINT_TYPE,
-                                            AVERT_METHOD,
-                                           model_name=AVERT_MODEL_NAME,
-                                           query_template=QUERY_TEMPLATE,
-                                           document_template=DOCUMENT_TEMPLATE,
-                                           grouping_method=GROUPING, 
-                                           verbose=False,
-                                           )
+    response_group_distribution, _ = a_vert.processing.get_candidate_groups_embedings_ranking(
+        pred,
+        group_texts_dict,
+        AVERT_CONFIG,
+        task=task if task else "default",
+    )
     # Check if this is a match
     a_vert_match = True
     if response_group_distribution["correct"] < response_group_distribution["wrong"]:
@@ -138,12 +131,12 @@ def process_results(doc, results):
     answer = doc["contextualized_answer"]
     options = doc["contextualized_options"]
     question = doc["question"]
-    task = "" #doc["task"]
+    task = doc.get("task", "default")
 
     # Evaluate the document with the given model response
-    results = doc_eval(response, options, answer, question, task)
+    result_dict = doc_eval(response, options, answer, question, task)
 
-    return results
+    return result_dict
 
 
 

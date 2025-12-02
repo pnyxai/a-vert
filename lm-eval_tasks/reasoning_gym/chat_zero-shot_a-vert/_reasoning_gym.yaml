@@ -1,0 +1,20 @@
+aggregate_metric_list:
+-   aggregation: mean
+    filter_list: pass_all
+    metric: score_match
+    weight_by_size: true
+-   aggregation: mean
+    filter_list: pass_all
+    metric: a-vert_match
+    weight_by_size: true
+group: reasoning_gym
+task:
+  - reasoning_gym_001-gsm_symbolic
+  - reasoning_gym_002-polynomial_equations
+  - reasoning_gym_003-complex_arithmetic
+  - reasoning_gym_004-simple_integration
+  - reasoning_gym_005-intermediate_integration
+  - reasoning_gym_006-dice
+  - reasoning_gym_007-codeio
+metadata:
+  version: 1.0

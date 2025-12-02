@@ -6,7 +6,7 @@ aggregate_metric_list:
 -   aggregation: mean
     filter_list: pass_all
     metric: a-vert_match
-    weight_by_size: true        
+    weight_by_size: true
 group: babisteps-chat-zero-shot-all
 task:
 - babisteps-chat_zero_shot-task_01-simpletracking

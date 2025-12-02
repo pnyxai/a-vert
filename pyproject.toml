@@ -1,18 +1,22 @@
 [project]
 name = "a-vert"
-version = "0.2.0"
+version = "0.3.0"
 description = "Agnostic-Verification with Embedding Ranking Tiers"
 authors = [
-    {name = "Ramiro Rodriguez Colmeiro",email = "rawthil@gmail.com"}
+    {name = "Ramiro Rodriguez Colmeiro",email = "rawthil@gmail.com"},
+    {name = "Nicolas Aguirre", email = "aguirrenicolas90@gmail.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "numpy (==2.2)",
     "requests (>=2.32.4,<3.0.0)",
-    "scipy (>=1.16.1,<2.0.0)"
+    "scipy (>=1.16.1,<2.0.0)",
+    "structlog (>=25.5.0,<26.0.0)"
 ]
 
+[tool.poetry.extras]
+reasoning-gym = ["reasoning-gym"]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -26,6 +30,7 @@ seaborn = "^0.13.2"
 scikit-learn = "1.7.2"
 lm-eval = {git = "git@github.com:EleutherAI/lm-evaluation-harness.git", rev = "v0.4.9.1", extras = ["api"], develop = true}
 pre-commit = "^4.5.0"
+reasoning-gym = "^0.1.24"
 
 
 [tool.poetry.group.tqdm.dependencies]

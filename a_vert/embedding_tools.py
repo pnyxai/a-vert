@@ -3,6 +3,10 @@ import requests
 import json
 from scipy import spatial
 
+from a_vert.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 def tei_embedding_call(text, tei_endpoint):
     """Calls the Text-Embedding-Inference endpoint and return the embeddings
@@ -14,8 +18,12 @@ def tei_embedding_call(text, tei_endpoint):
         tei_endpoint + "/embed", data=json.dumps(payload), headers=headers
     )
     if response.status_code != 200:
-        print(response.status_code)
-        print(response.text)
+        logger.error(
+            "TEI embedding endpoint call failed",
+            status_code=response.status_code,
+            response_body=response.text,
+            endpoint=tei_endpoint,
+        )
         raise ValueError("Failed to call endpoint.")
     embedding = np.array(json.loads(response.text))
     return embedding
@@ -34,8 +42,13 @@ def vllm_embedding_call(text, vllm_endpoint, vllm_model_name, max_len=-1):
         vllm_endpoint + "/v1/embeddings", data=json.dumps(payload), headers=headers
     )
     if response.status_code != 200:
-        print(response.status_code)
-        print(response.text)
+        logger.error(
+            "vLLM embedding endpoint call failed",
+            status_code=response.status_code,
+            response_body=response.text,
+            endpoint=vllm_endpoint,
+            model=vllm_model_name,
+        )
         raise ValueError("Failed to call endpoint.")
     response = json.loads(response.text)
     embedding = np.array([a["embedding"] for a in response["data"]])
@@ -159,16 +172,25 @@ def tei_rerank_call(query, targets, tei_rerank_endpoint):
         tei_rerank_endpoint + "/rerank", data=json.dumps(payload), headers=headers
     )
     if response.status_code != 200:
-        print(response.status_code)
-        print(response.text)
+        logger.error(
+            "TEI rerank endpoint call failed",
+            status_code=response.status_code,
+            response_body=response.text,
+            endpoint=tei_rerank_endpoint,
+        )
         raise ValueError("Failed to call endpoint.")
     response = json.loads(response.text)
 
     total_ranks = len(response)
     if total_ranks != len(targets):
-        print(query)
-        print(targets)
-        print(response)
+        logger.error(
+            "Mismatch between response and target count",
+            query=query,
+            num_targets=len(targets),
+            num_responses=total_ranks,
+            targets=targets,
+            response=response,
+        )
         raise ValueError(
             "Received less scores than targets from endpoint, cannot continue."
         )
@@ -197,19 +219,27 @@ def vllm_rerank_call(query, targets, vllm_rerank_endpoint, vllm_model_name, max_
         vllm_rerank_endpoint + "/v1/rerank", data=json.dumps(payload), headers=headers
     )
     if response.status_code != 200:
-        print(response.status_code)
-        print(response.text)
+        logger.error(
+            "vLLM rerank endpoint call failed",
+            status_code=response.status_code,
+            response_body=response.text,
+            endpoint=vllm_rerank_endpoint,
+            model=vllm_model_name,
+        )
         raise ValueError("Failed to call endpoint.")
 
     response = json.loads(response.text)
 
     total_ranks = len(response["results"])
     if total_ranks != len(targets):
-        print(query)
-        print(targets)
-        print(response)
-        print(len(total_ranks))
-        print(len(targets))
+        logger.error(
+            "Mismatch between response and target count",
+            query=query,
+            num_targets=len(targets),
+            num_responses=total_ranks,
+            targets=targets,
+            response=response,
+        )
         raise ValueError(
             "Received less scores than targets from endpoint, cannot continue."
         )
