@@ -1,0 +1,5 @@
+dataset_name: temporaltracking
+description: 'The following are basic taks (with answers) on the ability: temporaltracking.'
+include: _default_template_yaml
+task: babisteps-task_09-temporaltracking
+task_alias: task 09 - temporaltracking

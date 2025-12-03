@@ -1,0 +1,4 @@
+dataset_name: complex_arithmetic
+include: _default_template_yaml
+task: reasoning_gym_003-complex_arithmetic
+task_alias: "Reasoning gym - Complex Numbers Arithmetic"

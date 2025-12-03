@@ -1,0 +1,4 @@
+dataset_name: gsm_symbolic
+include: _default_template_yaml
+task: reasoning_gym_001-gsm_symbolic
+task_alias: "Reasoning gym - GSM Symbolic"

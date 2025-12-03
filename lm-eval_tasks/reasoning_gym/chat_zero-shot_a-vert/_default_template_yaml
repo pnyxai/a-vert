@@ -1,0 +1,23 @@
+dataset_path: PNYX/reasoning_gym_lmeh
+output_type: generate_until
+test_split: train
+doc_to_text: "{{question}}"
+doc_to_target: "{{answer}}"
+process_results: !function utils.process_results
+metric_list:
+  - metric: score_match
+    aggregation: mean
+    higher_is_better: true
+generation_kwargs:
+#  max_gen_toks: 25000
+  until:
+    - "</s>"
+  do_sample: false
+  temperature: 0.0
+filter_list:
+  - name: pass_all
+    filter:
+      - function: take_first
+num_fewshot: 0
+metadata:
+  version: 1.0
