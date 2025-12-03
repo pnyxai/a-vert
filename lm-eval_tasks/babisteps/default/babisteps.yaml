@@ -14,3 +14,5 @@ task:
 - babisteps-task_05-sizeorder
 - babisteps-task_06-spatialorder
 - babisteps-task_07-temporalorder
+- babisteps-task_08-pathfinding
+- babisteps-task_09-temporaltracking

@@ -1,0 +1,11 @@
+dataset_name: pathfinding
+description: 'The following are basic taks (with answers) on the ability: pathfinding.'
+include: _default_template_yaml
+task: babisteps-task_08-pathfinding
+task_alias: task 08 - pathfinding
+fewshot_config:
+  sampler: default
+  doc_to_text: !function utils.listing_fewshot_to_text
+  doc_to_target: ""
+doc_to_text: !function utils.listing_doc_to_text
+process_results: !function utils.process_results_pathfinding

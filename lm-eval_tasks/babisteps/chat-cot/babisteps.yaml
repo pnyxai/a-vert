@@ -14,3 +14,5 @@ task:
 - babisteps-chat-cot-task_05-sizeorder
 - babisteps-chat-cot-task_06-spatialorder
 - babisteps-chat-cot-task_07-temporalorder
+- babisteps-chat-cot-task_08-pathfinding
+- babisteps-chat-cot-task_09-temporaltracking
