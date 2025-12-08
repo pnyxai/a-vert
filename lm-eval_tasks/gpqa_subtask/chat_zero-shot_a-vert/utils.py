@@ -7,18 +7,16 @@ from a_vert.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Setup A-VERT configuration from environment variables
-AVERT_CONFIG = a_vert.setup()
-
-# For backward compatibility, extract individual values
-ENHANCE = AVERT_CONFIG.enhance
-
 # Default instruction map
 default_instruction = {
     "default": "Find the document that better represents the meaning in the query. Check for any doubts about the question or options. Focus on exact numbers, dates, or symbols.",
 }
-if not AVERT_CONFIG.instruction_map:
-    AVERT_CONFIG.instruction_map = default_instruction
+
+# Setup A-VERT configuration from environment variables
+AVERT_CONFIG = a_vert.setup(instruction_map=default_instruction)
+
+# For backward compatibility, extract individual values
+ENHANCE = AVERT_CONFIG.enhance
 
 
 def filter_response(pred):
