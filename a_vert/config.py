@@ -121,7 +121,7 @@ PREDEFINED_TEMPLATES = {
 }
 
 
-def setup() -> AvertConfig:
+def setup(instruction_map={}) -> AvertConfig:
     """
     Setup and validate A-VERT configuration from environment variables.
 
@@ -246,7 +246,6 @@ def setup() -> AvertConfig:
     config["ENHANCE"] = enhance_str in ("true", "1", "yes")
 
     # --- Instruction map loading & structural validation (no injection here) ---
-    instruction_map = {}
     instruction_path = os.getenv("AVERT_INSTRUCTION_CONFIG_PATH")
     if instruction_path:
         try:

@@ -10,18 +10,16 @@ except ImportError as e:
     ) from e
 import a_vert
 
-# Setup A-VERT configuration from environment variables
-AVERT_CONFIG = a_vert.setup()
-
-# For backward compatibility, extract individual values
-ENHANCE = AVERT_CONFIG.enhance
-
 # Default instruction map
 default_instruction = {
     "default": "Find the document that contians the closest numerical result or expresion in the Query.",
 }
-if not AVERT_CONFIG.instruction_map:
-    AVERT_CONFIG.instruction_map = default_instruction
+
+# Setup A-VERT configuration from environment variables
+AVERT_CONFIG = a_vert.setup(instruction_map=default_instruction)
+
+# For backward compatibility, extract individual values
+ENHANCE = AVERT_CONFIG.enhance
 
 # This is a distance threshold that we will use to avoid false positives.
 # Evaluating math with semantic processes is not solved by this version of
