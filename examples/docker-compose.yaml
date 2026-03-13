@@ -1,7 +1,7 @@
 services:
   vllm-openai-avert:
     container_name: vllm-openai-avert
-    image: vllm/vllm-openai:v0.11.2
+    image: vllm/vllm-openai:v0.17.1
     volumes:
       - ${MODELS_PATH}:/root/.cache/huggingface/hub/
     environment:
@@ -53,7 +53,7 @@ services:
 
   vllm-openai-llm:
     container_name: vllm-openai-llm
-    image: vllm/vllm-openai:v0.11.2
+    image: vllm/vllm-openai:v0.17.1
     depends_on:
       vllm-openai-avert:
         condition: service_healthy
