@@ -438,6 +438,10 @@ def construct_candidate_groups(
     # Inject none-answer placeholder into the wrong group when defined
     none_answer_placeholder = os.environ.get("LMEVAL_MODEL_NONE_ANSWER_PLACEHOLDER")
     if none_answer_placeholder is not None:
+        logger.debug(
+            "Injecting none-answer placeholder into wrong group",
+            placeholder=none_answer_placeholder,
+        )
         wrong_group_text = [*wrong_group_text, none_answer_placeholder]
 
     # Complete data, for compatibility with functions
