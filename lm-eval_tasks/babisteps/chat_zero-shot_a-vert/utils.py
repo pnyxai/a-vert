@@ -82,34 +82,43 @@ def doc_eval(pred, options, answers, question, task):
             exact_match = True
 
     # ----------------------- A-VERT -------------------------------------------
-    # Get other elements from the bAbI world
-    correct_group_text, wrong_group_text = get_babisteps_options(answers, question, options, task)
-    # Construct the wrong candidates group
-    group_texts_dict = a_vert.processing.construct_candidate_groups(correct_group_text, 
-                               wrong_group_text, 
-                               ["correct", "wrong"], 
-                               enhance=ENHANCE,
-                               )
-
-    # Process all candidate groups
-    response_group_distribution, _ = a_vert.processing.get_candidate_groups_embedings_ranking(
-        pred,
-        group_texts_dict,
-        AVERT_CONFIG,
-        task=task if task else "default",
-    )
-    # Check if this is a match
-    a_vert_match = True
-    if response_group_distribution["correct"] < response_group_distribution["wrong"]:
+    if len(pred) == 0 or pred == " ":
+        # This is not a valid generation
         a_vert_match = False
+        a_vert_correct_score = 0.0
+        a_vert_wrong_score = 1.0
+    else:
+        # Get other elements from the bAbI world
+        correct_group_text, wrong_group_text = get_babisteps_options(answers, question, options, task)
+        # Construct the wrong candidates group
+        group_texts_dict = a_vert.processing.construct_candidate_groups(correct_group_text, 
+                                wrong_group_text, 
+                                ["correct", "wrong"], 
+                                enhance=ENHANCE,
+                                )
+
+        # Process all candidate groups
+        response_group_distribution, _ = a_vert.processing.get_candidate_groups_embedings_ranking(
+            pred,
+            group_texts_dict,
+            AVERT_CONFIG,
+            task=task if task else "default",
+        )
+        # Check if this is a match
+        a_vert_match = True
+        if response_group_distribution["correct"] < response_group_distribution["wrong"]:
+            a_vert_match = False
+
+        a_vert_correct_score = response_group_distribution["correct"]
+        a_vert_wrong_score = response_group_distribution["wrong"]
 
     # --------------------------------------------------------------------------
 
     # Compile and return
     results = {
         "exact_match": exact_match,
-        "a-vert_correct_score": response_group_distribution["correct"], 
-        "a-vert_wrong_score": response_group_distribution["wrong"],
+        "a-vert_correct_score": a_vert_correct_score, 
+        "a-vert_wrong_score": a_vert_wrong_score,
         "a-vert_match": a_vert_match,
     }
 
