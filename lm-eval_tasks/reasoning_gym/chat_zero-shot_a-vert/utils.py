@@ -1,3 +1,4 @@
+import os
 import re
 import numpy as np
 
@@ -46,7 +47,7 @@ def filter_response(pred):
 
 def process_results(doc, results):
     """Custom processing function used to implement "a-vert" metric."""
-    if doc["task"] == "codeio":
+    if "codeio" in doc["task"]:
         results = process_codeio(doc, results)
     else:
         results = process_a_vert(doc, results)
@@ -73,43 +74,53 @@ def doc_eval(pred, options, answers, question, task):
             exact_match = True
 
     # ----------------------- A-VERT -------------------------------------------
-    # Get other elements from the bAbI world
-    correct_group_text, wrong_group_text = get_reasoning_gym_options(
-        answers, question, options, task
-    )
-    # Construct the wrong candidates group
-    group_texts_dict = a_vert.processing.construct_candidate_groups(
-        correct_group_text,
-        wrong_group_text,
-        ["correct", "wrong"],
-        enhance=ENHANCE,
-    )
-
-    # Process all candidate groups
-    response_group_distribution, all_distances = (
-        a_vert.processing.get_candidate_groups_embedings_ranking(
-            pred,
-            group_texts_dict,
-            AVERT_CONFIG,
-            task=task if task else "default",
-        )
-    )
-    # Check if this is a match
-    a_vert_match = True
-    not_valid = np.max(all_distances) < DISTANCE_THRESHOLD
-    if (
-        response_group_distribution["correct"] < response_group_distribution["wrong"]
-    ) or not_valid:
+    none_answer_placeholder = os.environ.get("LMEVAL_MODEL_NONE_ANSWER_PLACEHOLDER")
+    if len(pred.strip()) == 0 or pred == none_answer_placeholder:
+        # This is not a valid generation
         a_vert_match = False
+        a_vert_correct_score = 0.0
+        a_vert_wrong_score = 1.0
+    else:
+        # Get other elements from the bAbI world
+        correct_group_text, wrong_group_text = get_reasoning_gym_options(
+            answers, question, options, task
+        )
+        # Construct the wrong candidates group
+        group_texts_dict = a_vert.processing.construct_candidate_groups(
+            correct_group_text,
+            wrong_group_text,
+            ["correct", "wrong"],
+            enhance=ENHANCE,
+        )
 
-    # --------------------------------------------------------------------------
+        # Process all candidate groups
+        response_group_distribution, all_distances = (
+            a_vert.processing.get_candidate_groups_embedings_ranking(
+                pred,
+                group_texts_dict,
+                AVERT_CONFIG,
+                task=task if task else "default",
+            )
+        )
+        # Check if this is a match
+        a_vert_match = True
+        not_valid = np.max(all_distances) < DISTANCE_THRESHOLD
+        if (
+            response_group_distribution["correct"] < response_group_distribution["wrong"]
+        ) or not_valid:
+            a_vert_match = False
+
+        a_vert_correct_score = response_group_distribution["correct"]
+        a_vert_wrong_score = response_group_distribution["wrong"]
+
+        # --------------------------------------------------------------------------
 
     # Compile and return
     results = {
         "exact_match": exact_match,
         "score_match": 1.0 if (a_vert_match or exact_match) else 0.0,
-        "a-vert_correct_score": response_group_distribution["correct"],
-        "a-vert_wrong_score": response_group_distribution["wrong"],
+        "a-vert_correct_score": a_vert_correct_score,
+        "a-vert_wrong_score": a_vert_wrong_score,
         "a-vert_match": a_vert_match,
         "a-vert_valid": not not_valid,
     }
@@ -125,10 +136,7 @@ def process_a_vert(doc, results):
     assert len(results) == 1, "only single predictions are supported"
 
     # Get the data
-    # print(doc)
     response = results[0]
-    # answer = [doc["answer"]]
-    # answer = [doc["answer"]]+doc["contextualized_answers"]
     answer = doc["contextualized_answers"]
     # options = [str(a) for a in doc["options"]]
     # options = [str(a) for a in doc["options"]]+doc["contextualized_options"]
@@ -198,7 +206,11 @@ def process_codeio(doc, results):
     answer = doc["answer"].replace("\\", "")
 
     # Score
-    sample_score = codeio_class.score_answer(answer, {"answer": response})
+    if len(response) == 0:
+        # No answer
+        sample_score = 0
+    else:
+        sample_score = codeio_class.score_answer(answer, {"answer": response})
 
     # Compile and return
     results = {

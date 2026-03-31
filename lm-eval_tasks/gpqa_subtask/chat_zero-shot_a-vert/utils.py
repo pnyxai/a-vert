@@ -1,3 +1,4 @@
+import os
 import random
 import re
 import datasets
@@ -58,39 +59,48 @@ def doc_eval(pred, refs, question, choices, task):
         exact_match = False
 
     # ----------------------- A-VERT -------------------------------------------
-    # Generate options groups
-    correct_group_text, wrong_group_text, correct_group_idxs, wrong_group_idxs  = get_gpqa_options(refs, question, choices)
-
-    # Construct the wrong candidates group
-    group_texts_dict = a_vert.processing.construct_candidate_groups(correct_group_text, 
-                               wrong_group_text, 
-                               ["correct", "wrong"], 
-                               enhance=ENHANCE,
-                               with_options=ENHANCE,
-                               option_symbol="letters",
-                               correct_group_idxs=correct_group_idxs,
-                               wrong_group_idxs=wrong_group_idxs
-                               )
-
-    # Process all candidate groups
-    response_group_distribution, _ = a_vert.processing.get_candidate_groups_embedings_ranking(
-        pred,
-        group_texts_dict,
-        AVERT_CONFIG,
-        task=task if task else "default",
-    )
-    # Check if this is a match
-    a_vert_match = True
-    if response_group_distribution["correct"] < response_group_distribution["wrong"]:
+    none_answer_placeholder = os.environ.get("LMEVAL_MODEL_NONE_ANSWER_PLACEHOLDER")
+    if len(pred.strip()) == 0 or pred == none_answer_placeholder:
+        # This is not a valid generation
         a_vert_match = False
+        a_vert_correct_score = 0.0
+        a_vert_wrong_score = 1.0
+    else:
+        # Generate options groups
+        correct_group_text, wrong_group_text, correct_group_idxs, wrong_group_idxs  = get_gpqa_options(refs, question, choices)
 
+        # Construct the wrong candidates group
+        group_texts_dict = a_vert.processing.construct_candidate_groups(correct_group_text, 
+                                wrong_group_text, 
+                                ["correct", "wrong"], 
+                                enhance=ENHANCE,
+                                with_options=ENHANCE,
+                                option_symbol="letters",
+                                correct_group_idxs=correct_group_idxs,
+                                wrong_group_idxs=wrong_group_idxs
+                                )
+
+        # Process all candidate groups
+        response_group_distribution, _ = a_vert.processing.get_candidate_groups_embedings_ranking(
+            pred,
+            group_texts_dict,
+            AVERT_CONFIG,
+            task=task if task else "default",
+        )
+        # Check if this is a match
+        a_vert_match = True
+        if response_group_distribution["correct"] < response_group_distribution["wrong"]:
+            a_vert_match = False
+        a_vert_correct_score = response_group_distribution["correct"]
+        a_vert_wrong_score = response_group_distribution["wrong"]          
+        
     # --------------------------------------------------------------------------
 
     # Compile and return
     results = {
         "exact_match": exact_match,
-        "a-vert_correct_score": response_group_distribution["correct"], 
-        "a-vert_wrong_score": response_group_distribution["wrong"],
+        "a-vert_correct_score": a_vert_correct_score, 
+        "a-vert_wrong_score": a_vert_wrong_score,
         "a-vert_match": a_vert_match,
     }
 

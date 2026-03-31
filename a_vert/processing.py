@@ -12,11 +12,11 @@ logger = get_logger(__name__)
 
 
 def get_candidate_groups_embedings_ranking(
-    model_response,
-    candidate_groups_dict,
+    model_response: str,
+    candidate_groups_dict: dict,
     config: AvertConfig,
     distance_fn=spatial.distance.cosine,
-    batch_size=32,
+    batch_size: int = 32,
     task: str = "default",
 ):
     """This function takes a dictionary of candidate groups. Each element of the
@@ -30,6 +30,9 @@ def get_candidate_groups_embedings_ranking(
     adds up to one.
 
     """
+
+    if model_response.strip() == "":
+        raise ValueError("model_response cannot be an empty string.")
 
     # Extract configuration values from AvertConfig
     endpoint = config.avert_model_endpoint
@@ -385,16 +388,44 @@ def question_mistake_candidate_group_construction(
 
 
 def construct_candidate_groups(
-    correct_group_text,
-    wrong_group_text,
-    target_group_names_list,
-    enhance=True,
-    with_options=False,
-    option_symbol=None,
-    correct_group_idxs=None,
-    wrong_group_idxs=None,
-    return_references=False,
-):
+    correct_group_text: list[str],
+    wrong_group_text: list[str],
+    target_group_names_list: list[str],
+    enhance: bool = True,
+    with_options: bool = False,
+    option_symbol: str | None = None,
+    correct_group_idxs: list[int] | None = None,
+    wrong_group_idxs: list[int] | None = None,
+    return_references: bool = False,
+) -> dict | tuple[dict, list, list]:
+    """Build the candidate text groups used for embedding-based classification.
+
+    For each group name in ``target_group_names_list`` (one of ``"correct"``,
+    ``"wrong"``, ``"refusal"``, ``"formulation_mistake"``), the function
+    constructs a list of candidate strings that represent that response
+    category.  Optionally, each candidate in the correct/wrong groups is
+    expanded with semantic enhancements (``enhance=True``) and/or with
+    multiple-choice option permutations (``with_options=True``).
+
+    Args:
+        correct_group_text: List of strings representing correct answer(s).
+        wrong_group_text: List of strings representing wrong answer(s).
+        target_group_names_list: Ordered list of group names to build.
+        enhance: Whether to apply prompt-level semantic enhancements.
+        with_options: Whether the question has labelled answer options.
+        option_symbol: The symbol/letter prefix used for answer options.
+        correct_group_idxs: Original indices for correct answers (required
+            when ``with_options=True``).
+        wrong_group_idxs: Original indices for wrong answers (required when
+            ``with_options=True``).
+        return_references: If ``True``, also return per-candidate label and
+            group tracking lists alongside the output dict.
+
+    Returns:
+        A dict mapping each group name to its candidate list, or a tuple of
+        ``(output_dict, track_labels, track_groups)`` when
+        ``return_references=True``.
+    """
     assert len(target_group_names_list) == len(
         np.unique(target_group_names_list)
     ), "Group names contain duplicated elements."
