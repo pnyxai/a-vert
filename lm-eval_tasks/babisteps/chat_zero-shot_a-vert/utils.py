@@ -1,5 +1,5 @@
 from functools import partial
-
+import os
 from pydoc import doc
 import re
 
@@ -82,7 +82,8 @@ def doc_eval(pred, options, answers, question, task):
             exact_match = True
 
     # ----------------------- A-VERT -------------------------------------------
-    if len(pred) == 0 or pred == " ":
+    none_answer_placeholder = os.environ.get("LMEVAL_MODEL_NONE_ANSWER_PLACEHOLDER")
+    if len(pred.strip()) == 0 or pred == none_answer_placeholder:
         # This is not a valid generation
         a_vert_match = False
         a_vert_correct_score = 0.0

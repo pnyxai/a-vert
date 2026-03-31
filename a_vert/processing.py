@@ -1,4 +1,3 @@
-import os
 import numpy as np
 from copy import deepcopy
 from scipy import spatial
@@ -33,7 +32,7 @@ def get_candidate_groups_embedings_ranking(
     """
 
     if model_response in ["", " "]:
-        raise ValueError("model_response must not be an empty string.")
+        raise ValueError("model_response cannot be an empty string.")
 
     # Extract configuration values from AvertConfig
     endpoint = config.avert_model_endpoint
@@ -408,10 +407,6 @@ def construct_candidate_groups(
     expanded with semantic enhancements (``enhance=True``) and/or with
     multiple-choice option permutations (``with_options=True``).
 
-    If the environment variable ``LMEVAL_MODEL_NONE_ANSWER_PLACEHOLDER`` is
-    set, its value is appended to the wrong-answer candidates so that
-    placeholder/abstention outputs are treated as incorrect responses.
-
     Args:
         correct_group_text: List of strings representing correct answer(s).
         wrong_group_text: List of strings representing wrong answer(s).
@@ -434,15 +429,6 @@ def construct_candidate_groups(
     assert len(target_group_names_list) == len(
         np.unique(target_group_names_list)
     ), "Group names contain duplicated elements."
-
-    # Inject none-answer placeholder into the wrong group when defined
-    none_answer_placeholder = os.environ.get("LMEVAL_MODEL_NONE_ANSWER_PLACEHOLDER")
-    if none_answer_placeholder is not None:
-        logger.debug(
-            "Injecting none-answer placeholder into wrong group",
-            placeholder=none_answer_placeholder,
-        )
-        wrong_group_text = [*wrong_group_text, none_answer_placeholder]
 
     # Complete data, for compatibility with functions
     if not with_options and (correct_group_idxs is None or wrong_group_idxs is None):
