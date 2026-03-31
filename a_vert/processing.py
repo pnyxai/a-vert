@@ -31,7 +31,7 @@ def get_candidate_groups_embedings_ranking(
 
     """
 
-    if model_response in ["", " "]:
+    if model_response.strip() == "":
         raise ValueError("model_response cannot be an empty string.")
 
     # Extract configuration values from AvertConfig
