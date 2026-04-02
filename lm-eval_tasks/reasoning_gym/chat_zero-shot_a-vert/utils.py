@@ -80,6 +80,7 @@ def doc_eval(pred, options, answers, question, task):
         a_vert_match = False
         a_vert_correct_score = 0.0
         a_vert_wrong_score = 1.0
+        not_valid = True
     else:
         # Get other elements from the bAbI world
         correct_group_text, wrong_group_text = get_reasoning_gym_options(
