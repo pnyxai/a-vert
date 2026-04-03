@@ -14,10 +14,11 @@ class ReplaceFilter(Filter):
     """A filter that replaces text using regex substitution, refactored."""
 
     def __init__(
-        self,
-        regex_pattern: str,
-        replacement_string: str = "",  # Default is an empty string to remove matches
-        count: int = 0,  # Number of replacements to perform (0 means all)
+            self,
+            regex_pattern: str,
+            replacement_string:
+        str = "",  # Default is an empty string to remove matches
+            count: int = 0,  # Number of replacements to perform (0 means all)
     ) -> None:
         """
         Compiles `regex_pattern` and replaces matches with `replacement_string`.
@@ -30,7 +31,8 @@ class ReplaceFilter(Filter):
         self.replacement_string = replacement_string
         self.count = count
 
-    def apply(self, resps: list[list[str]], docs: list[dict]) -> list[list[str]]:
+    def apply(self, resps: list[list[str]],
+              docs: list[dict]) -> list[list[str]]:
         # Here, we assume resps is a list of lists, where each inner list is
         # a set of model responses for a particular input/target pair.
         # We process each of these inner lists independently.
@@ -48,9 +50,9 @@ class ReplaceFilter(Filter):
             for resp in inst:  # resp is an individual string from the inner list
                 # Use re.sub for replacement
                 # re.sub returns a string after replacement
-                processed_resp = self.regex.sub(
-                    self.replacement_string, resp, count=self.count
-                )
+                processed_resp = self.regex.sub(self.replacement_string,
+                                                resp,
+                                                count=self.count)
                 # Append the processed string (not a list of characters)
                 filtered_instance.append(processed_resp)
             # filter_set returns a list of strings for this instance
@@ -95,15 +97,21 @@ def format_example(example, include_options: bool, including_answer: bool):
     return prompt
 
 
-doc_to_text = partial(format_example, include_options=False, including_answer=False)
-fewshot_to_text = partial(format_example, include_options=False, including_answer=True)
+doc_to_text = partial(format_example,
+                      include_options=False,
+                      including_answer=False)
+fewshot_to_text = partial(format_example,
+                          include_options=False,
+                          including_answer=True)
 
 
 # ### Listing ###
-def listing_format_example(example, include_options: bool, including_answer: bool):
+def listing_format_example(example, include_options: bool,
+                           including_answer: bool):
     prompt = base_format(example, include_options)
     if including_answer:
-        if example["leaf_label"] == "none" or example["leaf_label"] == "unknown":
+        if example["leaf_label"] == "none" or example[
+                "leaf_label"] == "unknown":
             answer = random.choice(example["answer"])
         else:
             answer = ", ".join(example["answer"])
@@ -111,12 +119,12 @@ def listing_format_example(example, include_options: bool, including_answer: boo
     return prompt
 
 
-listing_doc_to_text = partial(
-    listing_format_example, include_options=False, including_answer=False
-)
-listing_fewshot_to_text = partial(
-    listing_format_example, include_options=False, including_answer=True
-)
+listing_doc_to_text = partial(listing_format_example,
+                              include_options=False,
+                              including_answer=False)
+listing_fewshot_to_text = partial(listing_format_example,
+                                  include_options=False,
+                                  including_answer=True)
 
 
 def process_results_listing(doc, results):
@@ -144,5 +152,30 @@ def process_results_listing(doc, results):
         results_set = set(results_list)
         # if both sets are equal, then 1, else 0
         exact_match = 1 if answer_set == results_set else 0
+    result_dict["exact_match"] = exact_match
+    return result_dict
+
+
+def process_results_pathfinding(doc, results):
+    result_dict = {}
+    if doc["leaf_label"] == "unknown":
+        # In this cases, due to the answer was sampled randomly, we need to
+        # check if the answer is in any of the results insted
+        # of check set equality like in the else case
+        metric = "exact_match"
+        gold = doc["answer"]
+        result = [results[0] for _ in range(len(gold))]
+        scores = get_metric(metric)(
+            references=gold,
+            predictions=result,
+        )[metric]
+        exact_match = 1.0 if scores > 0.0 else 0.0
+    else:
+        # sub spaces with empty string
+        results[0] = results[0].replace(" ", "")
+        # split results into a list by spliting by ", "
+        results_list = results[0].split(",")
+        # if both sets are equal, then 1, else 0
+        exact_match = 1 if doc["answer"] == results_list else 0
     result_dict["exact_match"] = exact_match
     return result_dict

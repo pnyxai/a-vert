@@ -7,29 +7,72 @@ from a_vert.logger import get_logger
 
 logger = get_logger(__name__)
 
+_RETRY_EXCEPTIONS = (requests.exceptions.Timeout, requests.exceptions.ConnectionError)
 
-def tei_embedding_call(text, tei_endpoint):
+
+def _post_with_retry(url, payload, timeout=20, max_retries=3, **log_context):
+    """POST to `url` with timeout and retry on transient network errors.
+
+    Returns the raw `requests.Response` on HTTP 200. Raises `ValueError` after
+    exhausting retries (on Timeout/ConnectionError) or immediately when the
+    server replies with a non-200 status code.
+    """
+    if max_retries < 1:
+        raise ValueError("max_retries must be >= 1")
+    headers = {"Content-Type": "application/json"}
+    last_exc = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = requests.post(
+                url, data=json.dumps(payload), headers=headers, timeout=timeout
+            )
+            break
+        except _RETRY_EXCEPTIONS as exc:
+            last_exc = exc
+            logger.warning(
+                "Endpoint call failed, retrying",
+                attempt=attempt,
+                max_retries=max_retries,
+                url=url,
+                error=str(exc),
+                **log_context,
+            )
+    else:
+        logger.error(
+            "Endpoint call failed after all retries",
+            max_retries=max_retries,
+            url=url,
+            **log_context,
+        )
+        raise ValueError("Failed to call endpoint after retries.") from last_exc
+
+    if response.status_code != 200:
+        logger.error(
+            "Endpoint returned non-200 status",
+            status_code=response.status_code,
+            response_body=response.text,
+            url=url,
+            **log_context,
+        )
+        raise ValueError("Failed to call endpoint.")
+
+    return response
+
+
+def tei_embedding_call(text, tei_endpoint, timeout=20, max_retries=3):
     """Calls the Text-Embedding-Inference endpoint and return the embeddings
     array.
     """
     payload = {"inputs": text, "truncate": True, "truncation_direction": "Left"}
-    headers = {"Content-Type": "application/json"}
-    response = requests.post(
-        tei_endpoint + "/embed", data=json.dumps(payload), headers=headers
+    response = _post_with_retry(
+        tei_endpoint + "/embed", payload, timeout=timeout, max_retries=max_retries
     )
-    if response.status_code != 200:
-        logger.error(
-            "TEI embedding endpoint call failed",
-            status_code=response.status_code,
-            response_body=response.text,
-            endpoint=tei_endpoint,
-        )
-        raise ValueError("Failed to call endpoint.")
-    embedding = np.array(json.loads(response.text))
-    return embedding
+    return np.array(json.loads(response.text))
 
 
-def vllm_embedding_call(text, vllm_endpoint, vllm_model_name, max_len=-1):
+def vllm_embedding_call(
+    text, vllm_endpoint, vllm_model_name, max_len=-1, timeout=20, max_retries=3
+):
     """Calls the vLLM endpoint and return the embeddings array."""
     payload = {
         "input": text,
@@ -37,22 +80,15 @@ def vllm_embedding_call(text, vllm_endpoint, vllm_model_name, max_len=-1):
         "encoding_format": "float",
         "truncate_prompt_tokens": max_len,
     }
-    headers = {"Content-Type": "application/json"}
-    response = requests.post(
-        vllm_endpoint + "/v1/embeddings", data=json.dumps(payload), headers=headers
+    response = _post_with_retry(
+        vllm_endpoint + "/v1/embeddings",
+        payload,
+        timeout=timeout,
+        max_retries=max_retries,
+        model=vllm_model_name,
     )
-    if response.status_code != 200:
-        logger.error(
-            "vLLM embedding endpoint call failed",
-            status_code=response.status_code,
-            response_body=response.text,
-            endpoint=vllm_endpoint,
-            model=vllm_model_name,
-        )
-        raise ValueError("Failed to call endpoint.")
-    response = json.loads(response.text)
-    embedding = np.array([a["embedding"] for a in response["data"]])
-    return embedding
+    data = json.loads(response.text)
+    return np.array([a["embedding"] for a in data["data"]])
 
 
 def get_embedding(text, endpoint, endpoint_type, model_name=None, max_batch_size=32):
@@ -156,29 +192,22 @@ def calculate_embedding_distances(
     return all_distances
 
 
-def tei_rerank_call(query, targets, tei_rerank_endpoint):
+def tei_rerank_call(query, targets, tei_rerank_endpoint, timeout=20, max_retries=3):
     """Calls the TEI endpoint and return the ranking scores as an array, in the
     same order as they were provided.
     """
-    # Get ranks
     payload = {
         "query": query,
         "texts": targets,
         "truncate": True,
         "truncation_direction": "Left",
     }
-    headers = {"Content-Type": "application/json"}
-    response = requests.post(
-        tei_rerank_endpoint + "/rerank", data=json.dumps(payload), headers=headers
+    response = _post_with_retry(
+        tei_rerank_endpoint + "/rerank",
+        payload,
+        timeout=timeout,
+        max_retries=max_retries,
     )
-    if response.status_code != 200:
-        logger.error(
-            "TEI rerank endpoint call failed",
-            status_code=response.status_code,
-            response_body=response.text,
-            endpoint=tei_rerank_endpoint,
-        )
-        raise ValueError("Failed to call endpoint.")
     response = json.loads(response.text)
 
     total_ranks = len(response)
@@ -203,31 +232,31 @@ def tei_rerank_call(query, targets, tei_rerank_endpoint):
     return all_scores
 
 
-def vllm_rerank_call(query, targets, vllm_rerank_endpoint, vllm_model_name, max_len=-1):
+def vllm_rerank_call(
+    query,
+    targets,
+    vllm_rerank_endpoint,
+    vllm_model_name,
+    max_len=-1,
+    timeout=20,
+    max_retries=3,
+):
     """Calls the vLLM endpoint and return the ranking scores as an array, in the
     same order as they were provided.
     """
-    # Get ranks
     payload = {
         "query": query,
         "documents": targets,
         "model": vllm_model_name,
         "truncate_prompt_tokens": max_len,
     }
-    headers = {"Content-Type": "application/json"}
-    response = requests.post(
-        vllm_rerank_endpoint + "/v1/rerank", data=json.dumps(payload), headers=headers
+    response = _post_with_retry(
+        vllm_rerank_endpoint + "/v1/rerank",
+        payload,
+        timeout=timeout,
+        max_retries=max_retries,
+        model=vllm_model_name,
     )
-    if response.status_code != 200:
-        logger.error(
-            "vLLM rerank endpoint call failed",
-            status_code=response.status_code,
-            response_body=response.text,
-            endpoint=vllm_rerank_endpoint,
-            model=vllm_model_name,
-        )
-        raise ValueError("Failed to call endpoint.")
-
     response = json.loads(response.text)
 
     total_ranks = len(response["results"])
