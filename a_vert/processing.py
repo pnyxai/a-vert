@@ -9,6 +9,7 @@ from a_vert.config import AvertConfig
 from a_vert.logger import get_logger
 
 logger = get_logger(__name__)
+_logged_template_keys: set = set()
 
 
 def get_candidate_groups_embedings_ranking(
@@ -75,23 +76,29 @@ def get_candidate_groups_embedings_ranking(
         if query_has_placeholder:
             final_query_template = base_query_template.replace(placeholder, instruction)
 
-        logger.debug(
-            "Instruction injected",
-            task=task,
-            base_doc_template=base_doc_template,
-            base_query_template=base_query_template,
-            final_doc_template=final_doc_template,
-            final_query_template=final_query_template,
-        )
+        _template_key = (final_doc_template, final_query_template)
+        if _template_key not in _logged_template_keys:
+            logger.debug(
+                "Instruction injected",
+                task=task,
+                base_doc_template=base_doc_template,
+                base_query_template=base_query_template,
+                final_doc_template=final_doc_template,
+                final_query_template=final_query_template,
+            )
+            _logged_template_keys.add(_template_key)
     else:
-        logger.debug(
-            "No instruction resolved; proceeding without injection",
-            task=task,
-            base_doc_template=base_doc_template,
-            base_query_template=base_query_template,
-            final_doc_template=final_doc_template,
-            final_query_template=final_query_template,
-        )
+        _template_key = (final_doc_template, final_query_template)
+        if _template_key not in _logged_template_keys:
+            logger.debug(
+                "No instruction resolved; proceeding without injection",
+                task=task,
+                base_doc_template=base_doc_template,
+                base_query_template=base_query_template,
+                final_doc_template=final_doc_template,
+                final_query_template=final_query_template,
+            )
+            _logged_template_keys.add(_template_key)
 
     # Create batch for the embedding endpoint
     batch = list()
@@ -140,6 +147,7 @@ def get_candidate_groups_embedings_ranking(
 
     # Split the distances into the corresponding groups
     group_distances_dict = dict()
+    all_group_results = dict()
     norm_sum = 0
     for group_name in candidate_groups_dict.keys():
         this_group_distances = all_distances[
@@ -151,19 +159,19 @@ def get_candidate_groups_embedings_ranking(
 
         # Aggregate candidate ranking for a single compact log entry
         sort_indices = np.argsort(this_group_distances)[::-1]
-        result = [
+        all_group_results[group_name] = [
             (
                 candidate_groups_dict[group_name][idx],
                 float(this_group_distances[idx]),
             )
             for idx in sort_indices
         ]
-        logger.debug(
-            "Candidate ranking",
-            group=group_name,
-            model_response=model_response,
-            result=result,
-        )
+
+    logger.debug(
+        "Candidate rankings results",
+        model_response=model_response,
+        **all_group_results,
+    )
 
     # Normalize scores
     for group_name in candidate_groups_dict.keys():
