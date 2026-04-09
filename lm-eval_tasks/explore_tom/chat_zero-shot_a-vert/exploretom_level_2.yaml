@@ -1,0 +1,4 @@
+dataset_name: facebook_level_2
+include: _default_template_yaml
+task: exploretom-chat-zero-shot-level-2
+task_alias: ExploreToM - Level 2

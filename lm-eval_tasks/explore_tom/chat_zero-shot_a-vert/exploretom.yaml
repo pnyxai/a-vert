@@ -1,0 +1,16 @@
+aggregate_metric_list:
+-   aggregation: mean
+    filter_list: pass_all
+    metric: exact_match
+    weight_by_size: true
+-   aggregation: mean
+    filter_list: pass_all
+    metric: a-vert_match
+    weight_by_size: true
+group: exploretom-chat-zero-shot-all
+task:
+- exploretom-chat-zero-shot-non_tom
+- exploretom-chat-zero-shot-level-1
+- exploretom-chat-zero-shot-level-2
+metadata:
+    version: 1

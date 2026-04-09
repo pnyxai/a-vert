@@ -1,0 +1,4 @@
+dataset_name: facebook_non_tom
+include: _default_template_yaml
+task: exploretom-chat-zero-shot-non_tom
+task_alias: ExploreTom - Non ToM
