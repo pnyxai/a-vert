@@ -44,7 +44,6 @@ def doc_eval(pred, doc, task):
     """This function takes a model generated response ("pred") and the document, and evaluates the response using both exact match and A-VERT metrics.
      It returns a dictionary containing the results for both metrics.
     """
-    #logger.debug("- Evaluating document", doc_id = doc.get("doc_id"))
     # ----------------------- A-VERT -------------------------------------------
     none_answer_placeholder = os.environ.get("LMEVAL_MODEL_NONE_ANSWER_PLACEHOLDER")
     if len(pred.strip()) == 0 or pred == none_answer_placeholder:
@@ -55,14 +54,12 @@ def doc_eval(pred, doc, task):
     else:
         correct_group_text =  doc["expected_answers"]
         wrong_group_text = doc["wrong_answers"]
-        #logger.debug("- Built candidate groups", correct_group_text=correct_group_text, wrong_group_text=wrong_group_text, doc_id = doc.get("doc_id"))
         # Construct the wrong candidates group
         group_texts_dict = a_vert.processing.construct_candidate_groups(correct_group_text, 
                                 wrong_group_text, 
                                 ["correct", "wrong"], 
                                 enhance=False,
                                 )
-        #logger.debug("- Constructed candidate groups", group_texts_dict=group_texts_dict, doc_id = doc.get("doc_id"))
         # Process all candidate groups
         response_group_distribution, _ = a_vert.processing.get_candidate_groups_embedings_ranking(
             pred,
