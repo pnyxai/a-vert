@@ -1,11 +1,11 @@
-dataset_path: /hf_cache/ExploreToM
-training_split: train
-validation_split: train
-test_split: train
+dataset_path: PNYX/ExploreToM
+training_split: test
+validation_split: test
+test_split: test
 description: ""
 output_type: generate_until
 doc_to_text: !function utils.doc_to_text_infilled_story
-doc_to_target: "{{expected_answer}}" # NOTE : Not used, target is handled in process_results.
+doc_to_target: "{{expected_answer}}"
 process_results: !function utils.process_results
 filter_list:
   - name: pass_all
