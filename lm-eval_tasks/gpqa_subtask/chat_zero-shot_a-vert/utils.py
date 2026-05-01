@@ -60,7 +60,7 @@ def doc_eval(pred, refs, question, choices, task):
 
     # ----------------------- A-VERT -------------------------------------------
     none_answer_placeholder = os.environ.get("LMEVAL_MODEL_NONE_ANSWER_PLACEHOLDER")
-    if len(pred.strip()) == 0 or pred == none_answer_placeholder:
+    if pred is None or len(pred.strip()) == 0 or pred == none_answer_placeholder:
         # This is not a valid generation
         a_vert_match = False
         a_vert_correct_score = 0.0

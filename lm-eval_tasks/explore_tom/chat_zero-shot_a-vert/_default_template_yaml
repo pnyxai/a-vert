@@ -1,6 +1,4 @@
 dataset_path: PNYX/ExploreToM
-training_split: test
-validation_split: test
 test_split: test
 description: ""
 output_type: generate_until
