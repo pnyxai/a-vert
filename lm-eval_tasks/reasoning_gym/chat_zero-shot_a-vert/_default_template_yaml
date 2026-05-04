@@ -9,7 +9,7 @@ metric_list:
     aggregation: mean
     higher_is_better: true
 generation_kwargs:
-#  max_gen_toks: 25000
+  max_gen_toks: 25000
   until:
     - "</s>"
   do_sample: false
