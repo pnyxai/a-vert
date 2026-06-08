@@ -7,6 +7,7 @@ doc_to_target: "{{['A', 'B', 'C', 'D'][answer]}}"
 process_results: !function utils.process_results
 generation_kwargs:
   max_gen_toks: 25000
+  until: null
 filter_list:
   - name: pass_all
     filter:

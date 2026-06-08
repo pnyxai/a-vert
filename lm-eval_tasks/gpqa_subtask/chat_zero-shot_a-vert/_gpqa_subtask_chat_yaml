@@ -14,6 +14,7 @@ filter_list:
 num_fewshot: 0
 generation_kwargs:
   max_gen_toks: 25000
+  until: null
   temperature: 0.0
 metadata:
   version: 1.0

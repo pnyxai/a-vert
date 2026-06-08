@@ -11,6 +11,7 @@ doc_to_target: "{{answer}}"
 process_results: !function utils.process_results
 generation_kwargs:
   max_gen_toks: 25000
+  until: null
   do_sample: false
   temperature: 0.0
 num_fewshot: 0
