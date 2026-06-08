@@ -13,10 +13,7 @@ filter_list:
       - function: take_first
 num_fewshot: 0
 generation_kwargs:
-  max_gen_toks: 7000
-  until:
-    - "</s>"
-    - "<|im_end|>"
+  max_gen_toks: 25000
   temperature: 0.0
 metadata:
   version: 1.0

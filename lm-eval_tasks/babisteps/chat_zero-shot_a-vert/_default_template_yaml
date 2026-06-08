@@ -8,11 +8,7 @@ doc_to_text: !function utils.doc_to_text
 doc_to_target: answer
 process_results: !function utils.process_results
 generation_kwargs:
-  max_gen_toks: 3096
-  until:
-    - "\n\n\n\n"
-    - "## World enumeration ##"
-    - "## Story ##"
+  max_gen_toks: 25000
 filter_list:
   - name: pass_all
     filter:
